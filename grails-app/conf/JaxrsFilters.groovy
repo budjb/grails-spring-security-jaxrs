@@ -31,7 +31,7 @@ class JaxrsFilters {
                     return false
                 }
                 catch (Exception e) {
-                    log.debug("unexpected error occurred", e)
+                    log.error("unexpected error occurred while processing request through JaxrsFilters", e)
                     render template: '/jaxrs/error', model: [message: e.message], status: 500
                     return false
                 }
