@@ -117,10 +117,16 @@ class JaxrsSecurityContext implements InitializingBean {
      * Load custom configuration.
      */
     protected void loadConfig() {
+        // Get the base config
+        Class configObject = this.class.classLoader.loadClass('DefaultJaxrsSecurityConfig')
+
+        // Parse the config
+        ConfigObject config = new ConfigSlurper(grails.util.Environment.current.name).parse(configObject).clone()
+
         // Get the config key
-        Map config = grailsApplication.config.grails?.plugin?.jaxrs?.security
-        if (!config) {
-            return
+        ConfigObject userConfig = grailsApplication.config.grails?.plugin?.jaxrs?.security
+        if (userConfig) {
+            config.merge(userConfig)
         }
 
         // Load config options from the config
