@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.budjb.jaxrs.security.annotation
+package com.budjb.jaxrs.security
 
-import java.lang.annotation.*
+public enum AuthMethod {
+    HEADER('header'),
+    QUERY('query')
 
-@Target([ElementType.METHOD])
-@Retention(RetentionPolicy.RUNTIME)
-public @interface NoAuth {
+    String value
 
+    public AuthMethod(String value) {
+        this.value = value
+    }
 }

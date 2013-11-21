@@ -18,6 +18,7 @@ import org.grails.jaxrs.ResourceArtefactHandler
 
 class JaxrsSecurityGrailsPlugin {
     def version = '0.1'
+    def group = 'com.rackspace.rvi'
     def grailsVersion = '2.0 > *'
     def title = 'Jaxrs Security'
     def author = 'Bud Byrd'
