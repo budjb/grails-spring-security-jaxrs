@@ -83,7 +83,7 @@ class JaxrsSecurityContext implements InitializingBean {
     /**
      * Default set of allowed auth methods.
      */
-    List auth
+    List<AuthMethod> auth
 
     /**
      * Whether to reject a request if no explicit rule has been set.
@@ -101,6 +101,9 @@ class JaxrsSecurityContext implements InitializingBean {
     public void initialize() {
         // Reset the context
         reset()
+
+        // Load the configuration
+        loadConfig()
 
         // Configure each resource
         grailsApplication.resourceClasses.each { DefaultGrailsResourceClass clazz ->
@@ -121,9 +124,6 @@ class JaxrsSecurityContext implements InitializingBean {
     public void afterPropertiesSet() throws Exception {
         // Validate injected beans
         Assert.notNull(grailsApplication)
-
-        // Load the configuration
-        loadConfig()
 
         // Validate configuration options
         // TODO
@@ -162,7 +162,7 @@ class JaxrsSecurityContext implements InitializingBean {
 
         // Load the default auth types
         if (config.authMethods instanceof List) {
-            auth = config.authMethods.collect { AuthMethod.valueOf(it) }
+            auth = config.authMethods
         }
     }
 
@@ -259,11 +259,11 @@ class JaxrsSecurityContext implements InitializingBean {
      */
     protected void authenticate(HttpServletRequest request, ResourceSecurityContext context) {
         // Track the enabled auth types
-        List authMethods
+        List<AuthMethod> authMethods
 
         // Check if the context has an authentication configuration defined
         if (context.authMethods) {
-            authMethods = context.authMethods.collect { AuthMethod.valueOf(it) }
+            authMethods = context.authMethods
         }
         else {
             authMethods = auth

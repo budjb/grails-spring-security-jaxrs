@@ -44,7 +44,7 @@ class ResourceSecurityContext {
     /**
      * List of roles required for the resource.
      */
-    List roles
+    List<String> roles
 
     /**
      * Whether to skip authentication.
@@ -54,7 +54,7 @@ class ResourceSecurityContext {
     /**
      * List of acceptable api key authentication types.
      */
-    List authMethods
+    List<AuthMethod> authMethods
 
     /**
      * Whether the pattern is absolute.

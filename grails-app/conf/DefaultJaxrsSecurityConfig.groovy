@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import com.budjb.jaxrs.security.AuthMethod
+
 security {
     apiKey {
         header = 'X-Authentication-ApiKey'
         query = 'apikey'
     }
-    authMethods = ['HEADER', 'QUERY']
+    authMethods = [AuthMethod.HEADER, AuthMethod.QUERY]
     rejectIfNoRule = true
     enabled = true
 }
