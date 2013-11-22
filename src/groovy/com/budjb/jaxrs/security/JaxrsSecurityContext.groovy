@@ -271,7 +271,7 @@ class JaxrsSecurityContext implements InitializingBean {
 
         // If no auth types were given, fail authentication
         if (!authMethods) {
-            if (context.allowAnonymous || !rejectIfNoRule) {
+            if (context.allowAnonymous) {
                 loginAnonymous()
                 return
             }

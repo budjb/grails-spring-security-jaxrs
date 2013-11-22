@@ -21,7 +21,7 @@ class JaxrsSecurityGrailsPlugin {
     /**
      * Project version.
      */
-    def version = '0.3'
+    def version = '0.4'
 
     /**
      * Maven group.
