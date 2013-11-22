@@ -15,6 +15,7 @@
  */
 package com.budjb.jaxrs.security
 
+import grails.util.Environment
 import java.lang.reflect.Method
 
 import javax.servlet.http.HttpServletRequest
@@ -132,14 +133,22 @@ class JaxrsSecurityContext implements InitializingBean {
      * Load custom configuration.
      */
     protected void loadConfig() {
-        // Get the base config
-        Class configObject = this.class.classLoader.loadClass('DefaultJaxrsSecurityConfig')
+        GroovyClassLoader classLoader = new GroovyClassLoader(JaxrsSecurityContext.classLoader)
 
-        // Parse the config
-        ConfigObject config = new ConfigSlurper(grails.util.Environment.current.name).parse(configObject).clone()
+        // Get the base config
+        ConfigObject config
+        try {
+            ConfigSlurper slurper = new ConfigSlurper(Environment.current.name)
+            config = slurper.parse(classLoader.loadClass('DefaultJaxrsSecurityConfig'))
+            config = config.security.clone()
+        }
+        catch (ClassNotFoundException e) {
+            log.error("default configuration not found on the classpath", e)
+            return
+        }
 
         // Get the config key
-        ConfigObject userConfig = grailsApplication.config.grails?.plugin?.jaxrs?.security
+        ConfigObject userConfig = grailsApplication.config.grails.plugin.jaxrs.security.clone()
         if (userConfig) {
             config.merge(userConfig)
         }

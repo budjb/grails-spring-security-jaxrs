@@ -17,7 +17,7 @@ import com.budjb.jaxrs.security.JaxrsSecurityContext
 import org.grails.jaxrs.ResourceArtefactHandler
 
 class JaxrsSecurityGrailsPlugin {
-    def version = '0.1'
+    def version = '0.2'
     def group = 'com.rackspace.rvi'
     def grailsVersion = '2.0 > *'
     def title = 'Jaxrs Security'

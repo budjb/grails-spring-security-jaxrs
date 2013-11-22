@@ -40,8 +40,8 @@ class JaxrsClient {
      * Field constraints.
      */
     static constraints = {
-        name blankable: false
-        apiKey blankable: false
+        name unique: true, blankable: false
+        apiKey unique: true, blankable: false
         dateCreated nullable: true
     }
 }

@@ -25,6 +25,6 @@ class JaxrsRole {
      * Field constraints.
      */
     static constraints = {
-        name blankable: false
+        name unique: true, blankable: false
     }
 }
