@@ -1,5 +1,21 @@
+/*
+ * Copyright 2013 Bud Byrd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.budjb.jaxrs.security
 
+import grails.util.Environment
 import java.lang.reflect.Method
 
 import javax.servlet.http.HttpServletRequest
@@ -67,7 +83,7 @@ class JaxrsSecurityContext implements InitializingBean {
     /**
      * Default set of allowed auth methods.
      */
-    List auth
+    List<AuthMethod> auth
 
     /**
      * Whether to reject a request if no explicit rule has been set.
@@ -85,6 +101,9 @@ class JaxrsSecurityContext implements InitializingBean {
     public void initialize() {
         // Reset the context
         reset()
+
+        // Load the configuration
+        loadConfig()
 
         // Configure each resource
         grailsApplication.resourceClasses.each { DefaultGrailsResourceClass clazz ->
@@ -106,9 +125,6 @@ class JaxrsSecurityContext implements InitializingBean {
         // Validate injected beans
         Assert.notNull(grailsApplication)
 
-        // Load the configuration
-        loadConfig()
-
         // Validate configuration options
         // TODO
     }
@@ -117,10 +133,24 @@ class JaxrsSecurityContext implements InitializingBean {
      * Load custom configuration.
      */
     protected void loadConfig() {
-        // Get the config key
-        Map config = grailsApplication.config.grails?.plugin?.jaxrs?.security
-        if (!config) {
+        GroovyClassLoader classLoader = new GroovyClassLoader(JaxrsSecurityContext.classLoader)
+
+        // Get the base config
+        ConfigObject config
+        try {
+            ConfigSlurper slurper = new ConfigSlurper(Environment.current.name)
+            config = slurper.parse(classLoader.loadClass('DefaultJaxrsSecurityConfig'))
+            config = config.security.clone()
+        }
+        catch (ClassNotFoundException e) {
+            log.error("default configuration not found on the classpath", e)
             return
+        }
+
+        // Get the config key
+        ConfigObject userConfig = grailsApplication.config.grails.plugin.jaxrs.security.clone()
+        if (userConfig) {
+            config.merge(userConfig)
         }
 
         // Load config options from the config
@@ -131,8 +161,8 @@ class JaxrsSecurityContext implements InitializingBean {
         enabled = config.enabled
 
         // Load the default auth types
-        if (config.authTypes instanceof List) {
-            auth = config.authTypes.collect { AuthType.valueOf(it) }
+        if (config.authMethods instanceof List) {
+            auth = config.authMethods
         }
     }
 
@@ -229,29 +259,29 @@ class JaxrsSecurityContext implements InitializingBean {
      */
     protected void authenticate(HttpServletRequest request, ResourceSecurityContext context) {
         // Track the enabled auth types
-        List authTypes
+        List<AuthMethod> authMethods
 
         // Check if the context has an authentication configuration defined
-        if (context.authTypes) {
-            authTypes = context.authTypes.collect { AuthType.valueOf(it) }
+        if (context.authMethods) {
+            authMethods = context.authMethods
         }
         else {
-            authTypes = auth
+            authMethods = auth
         }
 
         // If no auth types were given, fail authentication
-        if (!authTypes) {
-            if (context.noAuth || !rejectIfNoRule) {
-                setAnonymousLogin()
+        if (!authMethods) {
+            if (context.allowAnonymous) {
+                loginAnonymous()
                 return
             }
             throw new ForbiddenClientException("No authentication methods were configured for this resource.")
         }
 
         // Attempt authentication
-        for (AuthType authType : authTypes) {
+        for (AuthMethod authMethod : authMethods) {
             // Get the api key
-            String apiKey = getApiKey(request, authType)
+            String apiKey = getApiKey(request, authMethod)
             if (!apiKey) {
                 continue
             }
@@ -265,8 +295,8 @@ class JaxrsSecurityContext implements InitializingBean {
             // Check for deactivated keys
             if (jaxrsClient.active == false) {
                 // If the context allows no auth, set the anonymous user
-                if (context.noAuth) {
-                    setAnonymousLogin()
+                if (context.allowAnonymous) {
+                    loginAnonymous()
                     return
                 }
 
@@ -275,17 +305,17 @@ class JaxrsSecurityContext implements InitializingBean {
             }
 
             // Store a security context for the login
-            setClientLogin(apiKey)
+            loginClient(apiKey)
             return
         }
 
-        // Fail if noAuth isn't set
-        if (!context.noAuth) {
+        // Fail if allowAnonymous isn't set
+        if (!context.allowAnonymous) {
             throw new UnauthorizedClientException("API key was not provided or invalid.")
         }
 
         // Store an anonymous user
-        setAnonymousLogin()
+        loginAnonymous()
     }
 
     /**
@@ -295,25 +325,16 @@ class JaxrsSecurityContext implements InitializingBean {
      * @param context
      * @return
      */
-    protected String getApiKey(HttpServletRequest request, AuthType authType) {
-        switch (authType) {
-            case AuthType.HEADER:
+    protected String getApiKey(HttpServletRequest request, AuthMethod authMethod) {
+        switch (authMethod) {
+            case AuthMethod.HEADER:
                 return request.getHeader(apiKeyHeader)
 
-            case AuthType.QUERY:
+            case AuthMethod.QUERY:
                 return request.getParameter(apiKeyQuery)
         }
 
         return null
-    }
-
-    /**
-     * Sets the authentication for the individual request.
-     *
-     * @param apiKey
-     */
-    public void setAuthentication(ClientSecurityContext apiKey) {
-        authenticationHolder.set(apiKey)
     }
 
     /**
@@ -328,7 +349,7 @@ class JaxrsSecurityContext implements InitializingBean {
     /**
      * Stores an anonymous user in the authentication holder.
      */
-    protected void setAnonymousLogin() {
+    protected void loginAnonymous() {
         authenticationHolder.set(ClientSecurityContext.ANONYMOUS)
     }
 
@@ -337,13 +358,19 @@ class JaxrsSecurityContext implements InitializingBean {
      *
      * @param apiKey
      */
-    protected void setClientLogin(String apiKey) {
+    protected void loginClient(String apiKey) {
         authenticationHolder.set(new ClientSecurityContext(apiKey))
     }
 
+    /**
+     * Authorizes the authenticated user against the requested resource.
+     *
+     * @param request
+     * @param context
+     */
     protected void authorize(HttpServletRequest request, ResourceSecurityContext context) {
-        // Skip checks if noAuth is set on the context
-        if (context.noAuth) {
+        // Skip checks if allowAnonymous is set on the context
+        if (context.allowAnonymous) {
             return
         }
 

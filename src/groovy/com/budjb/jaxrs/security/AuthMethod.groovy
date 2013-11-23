@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.budjb.jaxrs.security.exception
+package com.budjb.jaxrs.security
 
-class UnauthorizedClientException extends Exception {
-    public UnauthorizedClientException() {
-        super()
-    }
+public enum AuthMethod {
+    HEADER('header'),
+    QUERY('query')
 
-    public UnauthorizedClientException(String message) {
-        super(message)
-    }
+    String value
 
-    public UnauthorizedClientException(String message, Throwable cause) {
-        super(message, cause)
+    public AuthMethod(String value) {
+        this.value = value
     }
 }

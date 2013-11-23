@@ -1,10 +1,25 @@
+/*
+ * Copyright 2013 Bud Byrd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.budjb.jaxrs.security
 
 import java.lang.reflect.Method
 
 import com.budjb.jaxrs.security.annotation.Requires
-import com.budjb.jaxrs.security.annotation.NoAuth
-import com.budjb.jaxrs.security.annotation.Auth
+import com.budjb.jaxrs.security.annotation.AllowAnonymous
+import com.budjb.jaxrs.security.annotation.AuthMethods
 
 import javax.ws.rs.DELETE
 import javax.ws.rs.GET
@@ -29,17 +44,17 @@ class ResourceSecurityContext {
     /**
      * List of roles required for the resource.
      */
-    List roles
+    List<String> roles
 
     /**
      * Whether to skip authentication.
      */
-    boolean noAuth
+    boolean allowAnonymous
 
     /**
      * List of acceptable api key authentication types.
      */
-    List authTypes
+    List<AuthMethod> authMethods
 
     /**
      * Whether the pattern is absolute.
@@ -77,6 +92,9 @@ class ResourceSecurityContext {
         // Get the base security config
         List baseSecurity = resource.getAnnotation(Requires)?.value()
 
+        // Get the base auth methods config
+        List baseAuthMethods = resource.getAnnotation(AuthMethods)?.value()
+
         // Set up each resource method
         resource.declaredMethods.each { method ->
             // Get the method
@@ -93,13 +111,16 @@ class ResourceSecurityContext {
             // Get the resource security config
             List resourceSecurity = method.getAnnotation(Requires)?.value()
 
+            // Get the resource auth methods config
+            List resourceAuthMethods = method.getAnnotation(AuthMethods)?.value()
+
             // Store the security context
             contexts << new ResourceSecurityContext(
                 pattern: buildPattern(basePath, resourcePath),
                 roles: resourceSecurity ?: baseSecurity ?: [],
                 method: httpMethod,
-                noAuth: method.getAnnotation(NoAuth) ? true : false,
-                authTypes: method.getAnnotation(Auth)?.value() ?: []
+                allowAnonymous: method.getAnnotation(AllowAnonymous) ? true : false,
+                authMethods: resourceAuthMethods ?: baseAuthMethods ?: []
             )
         }
 

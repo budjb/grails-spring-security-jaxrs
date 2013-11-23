@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.budjb.jaxrs.security.exception
+package com.budjb.jaxrs.security.annotation
 
-class UnauthorizedClientException extends Exception {
-    public UnauthorizedClientException() {
-        super()
-    }
+import java.lang.annotation.*
+import com.budjb.jaxrs.security.AuthMethod
 
-    public UnauthorizedClientException(String message) {
-        super(message)
-    }
-
-    public UnauthorizedClientException(String message, Throwable cause) {
-        super(message, cause)
-    }
+@Target([ElementType.METHOD, ElementType.TYPE])
+@Retention(RetentionPolicy.RUNTIME)
+public @interface AuthMethods {
+    AuthMethod[] value() default []
 }

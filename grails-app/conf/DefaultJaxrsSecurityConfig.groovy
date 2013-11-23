@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.budjb.jaxrs.security.exception
+import com.budjb.jaxrs.security.AuthMethod
 
-class UnauthorizedClientException extends Exception {
-    public UnauthorizedClientException() {
-        super()
+security {
+    apiKey {
+        header = 'X-Authentication-ApiKey'
+        query = 'apikey'
     }
-
-    public UnauthorizedClientException(String message) {
-        super(message)
-    }
-
-    public UnauthorizedClientException(String message, Throwable cause) {
-        super(message, cause)
-    }
+    authMethods = [AuthMethod.HEADER, AuthMethod.QUERY]
+    rejectIfNoRule = true
+    enabled = true
 }
