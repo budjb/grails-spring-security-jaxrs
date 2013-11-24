@@ -133,6 +133,7 @@ class JaxrsSecurityContext implements InitializingBean {
      * Load custom configuration.
      */
     protected void loadConfig() {
+        // Get a class loader
         GroovyClassLoader classLoader = new GroovyClassLoader(JaxrsSecurityContext.classLoader)
 
         // Get the base config
@@ -162,7 +163,10 @@ class JaxrsSecurityContext implements InitializingBean {
 
         // Load the default auth types
         if (config.authMethods instanceof List) {
-            auth = config.authMethods
+            auth = AuthMethod.parse(config.authMethods)
+        }
+        else {
+            log.warn("jaxrs security configuration value \"authMethods\" must be a list")
         }
     }
 

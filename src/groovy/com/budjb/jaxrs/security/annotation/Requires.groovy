@@ -17,6 +17,11 @@ package com.budjb.jaxrs.security.annotation
 
 import java.lang.annotation.*
 
+/**
+ * Defines a list of roles required to access the annotated resource.
+ *
+ * Note that if multiple roles are given, only one is required.
+ */
 @Target([ElementType.METHOD, ElementType.TYPE])
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Requires {

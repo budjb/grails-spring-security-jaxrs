@@ -28,6 +28,7 @@ import javax.ws.rs.POST
 import javax.ws.rs.PUT
 import javax.ws.rs.Path
 
+import org.apache.log4j.Logger
 import org.grails.jaxrs.DefaultGrailsResourceClass
 
 class ResourceSecurityContext {
@@ -55,6 +56,11 @@ class ResourceSecurityContext {
      * List of acceptable api key authentication types.
      */
     List<AuthMethod> authMethods
+
+    /**
+     * Logger.
+     */
+    static private Logger log = Logger.getLogger(ResourceSecurityContext.class)
 
     /**
      * Whether the pattern is absolute.
@@ -93,7 +99,7 @@ class ResourceSecurityContext {
         List baseSecurity = resource.getAnnotation(Requires)?.value()
 
         // Get the base auth methods config
-        List baseAuthMethods = resource.getAnnotation(AuthMethods)?.value()
+        List baseAuthMethods = AuthMethod.parse(resource.getAnnotation(AuthMethods)?.value())
 
         // Set up each resource method
         resource.declaredMethods.each { method ->
@@ -112,7 +118,7 @@ class ResourceSecurityContext {
             List resourceSecurity = method.getAnnotation(Requires)?.value()
 
             // Get the resource auth methods config
-            List resourceAuthMethods = method.getAnnotation(AuthMethods)?.value()
+            List resourceAuthMethods = AuthMethod.parse(method.getAnnotation(AuthMethods)?.value())
 
             // Store the security context
             contexts << new ResourceSecurityContext(

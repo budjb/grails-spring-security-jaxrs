@@ -17,6 +17,11 @@ package com.budjb.jaxrs.security.annotation
 
 import java.lang.annotation.*
 
+/**
+ * Allows anonymous access to a resource annotated with this annotation.
+ *
+ * Note that authentication is still attempted if a valid API key is passed.
+ */
 @Target([ElementType.METHOD])
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AllowAnonymous {
