@@ -17,46 +17,41 @@ package com.budjb.jaxrs.security
 
 public class ClientSecurityContext {
     /**
-     * Name assigned to anonymous clients.
-     */
-    private static final String ANONYMOUS_KEY = '__anonymous__'
-
-    /**
      * An instance of an anonymous client.
      */
-    public static final ClientSecurityContext ANONYMOUS = new ClientSecurityContext(ANONYMOUS_KEY)
+    public static final ClientSecurityContext ANONYMOUS = new ClientSecurityContext(new AnonymousCredentials())
 
     /**
-     * API key associated with the client.
+     * Credentials used to authenticate the user.
      */
-    public String apiKey
-
-    /**
-     * Whether the
-     */
-    public boolean getIsAnonymous() {
-        return apiKey == ANONYMOUS_KEY
-    }
+    private ClientCredentials credentials
 
     /**
      * Constructor.
      *
      * @param apiKey
      */
-    public ClientSecurityContext(String apiKey) {
-        this.apiKey = apiKey
+    public ClientSecurityContext(ClientCredentials credentials) {
+        this.credentials = credentials
     }
 
     /**
-     * Return the client instance for the api key.
+     * Whether the security context is anonymous.
+     */
+    public boolean getIsAnonymous() {
+        return (credentials instanceof AnonymousCredentials)
+    }
+
+    /**
+     * Returns the logged in user.
      *
-     * @return Client instance associated with the api key, or null if anonymous.
+     * @return
      */
     public JaxrsClient getClient() {
-        if (getIsAnonymous()) {
+        if (!credentials || getIsAnonymous()) {
             return null
         }
 
-        return JaxrsClient.find { apiKey == this.apiKey }
+        return JaxrsClient.find { principal == credentials.principal && provider == credentials.provider }
     }
 }

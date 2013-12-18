@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.budjb.jaxrs.security.annotation
+package com.budjb.jaxrs.security;
 
-import java.lang.annotation.*
+import org.codehaus.groovy.grails.commons.InjectableGrailsClass;
 
-/**
- * Specifies the authentication methods that are available to the annotated resource.
- *
- * Valid parameters are "header" and "query".
- */
-@Target([ElementType.METHOD, ElementType.TYPE])
-@Retention(RetentionPolicy.RUNTIME)
-public @interface AuthMethods {
-    String[] value() default []
+public interface GrailsJaxrsAuthenticationProviderClass extends InjectableGrailsClass {
+
 }

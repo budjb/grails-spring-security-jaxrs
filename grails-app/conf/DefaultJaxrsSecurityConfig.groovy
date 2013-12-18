@@ -18,7 +18,7 @@ security {
         header = 'X-Authentication-ApiKey'
         query = 'apikey'
     }
-    authMethods = ['header', 'query']
+    authProviders = ['header-apikey', 'query-apikey']
     rejectIfNoRule = true
     enabled = true
 }

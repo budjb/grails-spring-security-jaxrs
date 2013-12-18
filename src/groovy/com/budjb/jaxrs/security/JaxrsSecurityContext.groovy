@@ -34,9 +34,11 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.util.Assert
 
-import com.budjb.jaxrs.security.annotation.Requires
+import com.budjb.jaxrs.security.annotation.RequiresRoles
 import com.budjb.jaxrs.security.exception.ForbiddenClientException
 import com.budjb.jaxrs.security.exception.UnauthorizedClientException
+import com.budjb.jaxrs.security.provider.HeaderApiKeyAuthenticationProvider
+import com.budjb.jaxrs.security.provider.QueryApiKeyAuthenticationProvider
 
 class JaxrsSecurityContext implements InitializingBean {
     /**
@@ -83,7 +85,12 @@ class JaxrsSecurityContext implements InitializingBean {
     /**
      * Default set of allowed auth methods.
      */
-    List<AuthMethod> auth
+    List<String> defaultAuthProviders
+
+    /**
+     * Authentication broker.
+     */
+    AuthBroker authBroker
 
     /**
      * Whether to reject a request if no explicit rule has been set.
@@ -116,17 +123,14 @@ class JaxrsSecurityContext implements InitializingBean {
      */
     public void reset() {
         securityContexts = []
+        authBroker = new AuthBroker()
     }
 
     /**
      * Do some post-injection validation.
      */
     public void afterPropertiesSet() throws Exception {
-        // Validate injected beans
         Assert.notNull(grailsApplication)
-
-        // Validate configuration options
-        // TODO
     }
 
     /**
@@ -162,11 +166,11 @@ class JaxrsSecurityContext implements InitializingBean {
         enabled = config.enabled
 
         // Load the default auth types
-        if (config.authMethods instanceof List) {
-            auth = AuthMethod.parse(config.authMethods)
+        if (config.authProviders instanceof List) {
+            defaultAuthProviders = config.authProviders
         }
         else {
-            log.warn("jaxrs security configuration value \"authMethods\" must be a list")
+            log.warn("jaxrs security configuration value \"authProviders\" must be a list")
         }
     }
 
@@ -262,19 +266,11 @@ class JaxrsSecurityContext implements InitializingBean {
      * @param context
      */
     protected void authenticate(HttpServletRequest request, ResourceSecurityContext context) {
-        // Track the enabled auth types
-        List<AuthMethod> authMethods
-
-        // Check if the context has an authentication configuration defined
-        if (context.authMethods) {
-            authMethods = context.authMethods
-        }
-        else {
-            authMethods = auth
-        }
+        // Get a list of valid providers for the resource
+        List<String> providers = context.authProviders ?: defaultAuthProviders ?: []
 
         // If no auth types were given, fail authentication
-        if (!authMethods) {
+        if (!providers) {
             if (context.allowAnonymous) {
                 loginAnonymous()
                 return
@@ -283,62 +279,27 @@ class JaxrsSecurityContext implements InitializingBean {
         }
 
         // Attempt authentication
-        for (AuthMethod authMethod : authMethods) {
-            // Get the api key
-            String apiKey = getApiKey(request, authMethod)
-            if (!apiKey) {
-                continue
+        ClientSecurityContext clientContext = authBroker.authenticate(request, providers)
+
+        // Check for failed login
+        if (!clientContext) {
+            // If anonymous login is set, set the anonymous user and continue
+            if (context.allowAnonymous) {
+                loginAnonymous()
+                return
             }
 
-            // Find the matching api key in the db
-            JaxrsClient jaxrsClient = JaxrsClient.findByApiKey(apiKey)
-            if (!jaxrsClient) {
-                continue
-            }
-
-            // Check for deactivated keys
-            if (jaxrsClient.active == false) {
-                // If the context allows no auth, set the anonymous user
-                if (context.allowAnonymous) {
-                    loginAnonymous()
-                    return
-                }
-
-                // Reject the request
-                throw new ForbiddenClientException("API key is disabled.")
-            }
-
-            // Store a security context for the login
-            loginClient(apiKey)
-            return
+            // Decline the request
+            throw new UnauthorizedClientException("Authentication credentials are either missing or invalid.")
         }
 
-        // Fail if allowAnonymous isn't set
-        if (!context.allowAnonymous) {
-            throw new UnauthorizedClientException("API key was not provided or invalid.")
+        // Check for disabled login
+        if (clientContext.getClient().active == false) {
+            throw new ForbiddenClientException("Client account has been disabled.")
         }
 
-        // Store an anonymous user
-        loginAnonymous()
-    }
-
-    /**
-     * Retrieves an api key from the request.
-     *
-     * @param request
-     * @param context
-     * @return
-     */
-    protected String getApiKey(HttpServletRequest request, AuthMethod authMethod) {
-        switch (authMethod) {
-            case AuthMethod.HEADER:
-                return request.getHeader(apiKeyHeader)
-
-            case AuthMethod.QUERY:
-                return request.getParameter(apiKeyQuery)
-        }
-
-        return null
+        // Store a security context for the login
+        loginClient(clientContext)
     }
 
     /**
@@ -362,8 +323,8 @@ class JaxrsSecurityContext implements InitializingBean {
      *
      * @param apiKey
      */
-    protected void loginClient(String apiKey) {
-        authenticationHolder.set(new ClientSecurityContext(apiKey))
+    protected void loginClient(ClientSecurityContext context) {
+        authenticationHolder.set(context)
     }
 
     /**
@@ -419,5 +380,15 @@ class JaxrsSecurityContext implements InitializingBean {
         }
 
         throw new ForbiddenClientException("Access denied because client does not have the required role memberships.")
+    }
+
+    /**
+     * Registers an authentication provider.
+     *
+     * @param provider
+     */
+    public void registerAuthenticationProvider(AuthenticationProvider provider) {
+        log.debug("registering authentication provider ${provider.class}")
+        authBroker.registerAuthenticationProvider(provider)
     }
 }

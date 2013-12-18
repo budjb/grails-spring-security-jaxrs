@@ -17,7 +17,7 @@ package com.budjb.jaxrs.security
 
 import java.lang.reflect.Method
 
-import com.budjb.jaxrs.security.annotation.Requires
+import com.budjb.jaxrs.security.annotation.RequiresRoles
 import com.budjb.jaxrs.security.annotation.AllowAnonymous
 import com.budjb.jaxrs.security.annotation.AuthMethods
 
@@ -55,12 +55,12 @@ class ResourceSecurityContext {
     /**
      * List of acceptable api key authentication types.
      */
-    List<AuthMethod> authMethods
+    List<String> authProviders
 
     /**
      * Logger.
      */
-    static private Logger log = Logger.getLogger(ResourceSecurityContext.class)
+    static private Logger log = Logger.getLogger(ResourceSecurityContext)
 
     /**
      * Whether the pattern is absolute.
@@ -93,13 +93,13 @@ class ResourceSecurityContext {
         Class resource = clazz.clazz
 
         // Get the base path of the resource
-        String basePath = resource.getAnnotation(Path)?.value()
+        String classPath = resource.getAnnotation(Path)?.value()
 
         // Get the base security config
-        List baseSecurity = resource.getAnnotation(Requires)?.value()
+        List classSecurity = resource.getAnnotation(RequiresRoles)?.value()
 
         // Get the base auth methods config
-        List baseAuthMethods = AuthMethod.parse(resource.getAnnotation(AuthMethods)?.value())
+        List classAuthProviders = resource.getAnnotation(AuthMethods)?.value()
 
         // Set up each resource method
         resource.declaredMethods.each { method ->
@@ -115,18 +115,18 @@ class ResourceSecurityContext {
             String resourcePath = method.getAnnotation(Path)?.value() ?: ''
 
             // Get the resource security config
-            List resourceSecurity = method.getAnnotation(Requires)?.value()
+            List resourceSecurity = method.getAnnotation(RequiresRoles)?.value()
 
             // Get the resource auth methods config
-            List resourceAuthMethods = AuthMethod.parse(method.getAnnotation(AuthMethods)?.value())
+            List resourceAuthProviders = method.getAnnotation(AuthMethods)?.value()
 
             // Store the security context
             contexts << new ResourceSecurityContext(
-                pattern: buildPattern(basePath, resourcePath),
-                roles: resourceSecurity ?: baseSecurity ?: [],
+                pattern: buildPattern(classPath, resourcePath),
+                roles: resourceSecurity ?: classSecurity ?: [],
                 method: httpMethod,
                 allowAnonymous: method.getAnnotation(AllowAnonymous) ? true : false,
-                authMethods: resourceAuthMethods ?: baseAuthMethods ?: []
+                authProviders: resourceAuthProviders ?: classAuthProviders ?: []
             )
         }
 

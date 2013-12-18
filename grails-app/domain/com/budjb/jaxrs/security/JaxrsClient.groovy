@@ -19,12 +19,17 @@ class JaxrsClient {
     /**
      * Api Key
      */
-    String apiKey
+    String principal
 
     /**
      * Client name
      */
     String name
+
+    /**
+     * Provider the client is authenticated by
+     */
+    String provider
 
     /**
      * Whether the key is active
@@ -41,7 +46,8 @@ class JaxrsClient {
      */
     static constraints = {
         name unique: true, blankable: false
-        apiKey unique: true, blankable: false
+        principal unique: 'provider', blankable: false
         dateCreated nullable: true
+        provider blankable: false
     }
 }

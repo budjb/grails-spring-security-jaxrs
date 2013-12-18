@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 import com.budjb.jaxrs.security.JaxrsSecurityContext
+import com.budjb.jaxrs.security.JaxrsAuthenticationProviderArtefactHandler
+import com.budjb.jaxrs.security.GrailsJaxrsAuthenticationProviderClass
+import com.budjb.jaxrs.security.provider.HeaderApiKeyAuthenticationProvider
+import com.budjb.jaxrs.security.provider.QueryApiKeyAuthenticationProvider
 import org.grails.jaxrs.ResourceArtefactHandler
 import org.apache.log4j.Logger
+
+import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.codehaus.groovy.grails.commons.GrailsClass
 
 class JaxrsSecurityGrailsPlugin {
     /**
@@ -77,8 +84,10 @@ class JaxrsSecurityGrailsPlugin {
      * Files to watch for reloads.
      */
     def watchedResources = [
-        "file:./grails-app/resources/**/*Resource.groovy",
-        "file:./plugins/*/grails-app/resources/**/*Resource.groovy",
+        "file:./grails-app/resources/**Resource.groovy",
+        "file:./plugins/*/grails-app/resources/**Resource.groovy",
+        "file:./grails-app/jaxrs-security-auth/**AuthenticationProvider.groovy",
+        "file:./plugins/*/grails-app/jaxrs-security-auth/**AuthenticationProvider.groovy"
     ]
 
     /**
@@ -92,9 +101,29 @@ class JaxrsSecurityGrailsPlugin {
     Logger log = Logger.getLogger('com.budjb.jaxrs.security.JaxrsSecurityGrailsPlugin')
 
     /**
+     * Customer artefacts.
+     */
+    def artefacts = [
+        new JaxrsAuthenticationProviderArtefactHandler()
+    ]
+
+    /**
      * Bean configuration.
      */
     def doWithSpring = {
+        // Built-in providers
+        "${HeaderApiKeyAuthenticationProvider.name}"(HeaderApiKeyAuthenticationProvider)
+        "${QueryApiKeyAuthenticationProvider.name}"(QueryApiKeyAuthenticationProvider)
+
+        // Register client providers
+        application.jaxrsAuthenticationProviderClasses.each { GrailsClass clazz ->
+            "${clazz.fullName}"(clazz.clazz) { bean ->
+                bean.scope = 'singleton'
+                bean.autowire = true
+            }
+        }
+
+        // Security context
         'jaxrsSecurityContext'(JaxrsSecurityContext) { bean ->
             bean.autowire = 'byName'
         }
@@ -104,7 +133,7 @@ class JaxrsSecurityGrailsPlugin {
      * Application context actions.
      */
     def doWithApplicationContext = { applicationContext ->
-        reloadJaxrsSecurityContext(applicationContext.getBean('jaxrsSecurityContext'))
+        reloadJaxrsSecurityContext(application, applicationContext.getBean('jaxrsSecurityContext'))
     }
 
     /**
@@ -116,7 +145,18 @@ class JaxrsSecurityGrailsPlugin {
         }
 
         if (application.isArtefactOfType(ResourceArtefactHandler.TYPE, event.source)) {
-            reloadJaxrsSecurityContext(event.ctx.getBean('jaxrsSecurityContext'))
+            reloadJaxrsSecurityContext(application, event.ctx.getBean('jaxrsSecurityContext'))
+        }
+        else if (application.isArtefactOfType(JaxrsAuthenticationProviderArtefactHandler.TYPE, event.source)) {
+            GrailsJaxrsAuthenticationProviderClass converterClass = application.addArtefact(JaxrsAuthenticationProviderArtefactHandler.TYPE, event.source)
+            beans {
+                "${converterClass.propertyName}"(converterClass.clazz) { bean ->
+                    bean.scope = 'singleton'
+                    bean.autowire = true
+                }
+            }.registerBeans(event.ctx)
+
+            reloadJaxrsSecurityContext(application, event.ctx.getBean('jaxrsSecurityContext'))
         }
     }
 
@@ -124,7 +164,7 @@ class JaxrsSecurityGrailsPlugin {
      * Configuration change event.
      */
     def onConfigChange = { event ->
-        reloadJaxrsSecurityContext(event.ctx.getBean('jaxrsSecurityContext'))
+        reloadJaxrsSecurityContext(application, event.ctx.getBean('jaxrsSecurityContext'))
     }
 
     /**
@@ -133,7 +173,14 @@ class JaxrsSecurityGrailsPlugin {
      * @param context
      * @return
      */
-    def reloadJaxrsSecurityContext(JaxrsSecurityContext context) {
+    def reloadJaxrsSecurityContext(GrailsApplication application, JaxrsSecurityContext context) {
         context.initialize()
+
+        application.jaxrsAuthenticationProviderClasses.each { GrailsClass clazz ->
+            context.registerAuthenticationProvider(application.mainContext.getBean(clazz.fullName))
+        }
+
+        context.registerAuthenticationProvider(application.mainContext.getBean(HeaderApiKeyAuthenticationProvider.name))
+        context.registerAuthenticationProvider(application.mainContext.getBean(QueryApiKeyAuthenticationProvider.name))
     }
 }
