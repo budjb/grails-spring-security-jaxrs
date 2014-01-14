@@ -112,8 +112,14 @@ class JaxrsSecurityGrailsPlugin {
      */
     def doWithSpring = {
         // Built-in providers
-        "${HeaderApiKeyAuthenticationProvider.name}"(HeaderApiKeyAuthenticationProvider)
-        "${QueryApiKeyAuthenticationProvider.name}"(QueryApiKeyAuthenticationProvider)
+        "${HeaderApiKeyAuthenticationProvider.name}"(HeaderApiKeyAuthenticationProvider) { bean ->
+            bean.scope = 'singleton'
+            bean.autowire = true
+        }
+        "${QueryApiKeyAuthenticationProvider.name}"(QueryApiKeyAuthenticationProvider) { bean ->
+            bean.scope = 'singleton'
+            bean.autowire = true
+        }
 
         // Register client providers
         application.jaxrsAuthenticationProviderClasses.each { GrailsClass clazz ->

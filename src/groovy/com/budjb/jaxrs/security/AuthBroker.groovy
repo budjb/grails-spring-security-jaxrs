@@ -37,19 +37,21 @@ class AuthBroker {
      * @return
      */
     public ClientSecurityContext authenticate(HttpServletRequest request, List<String> providerKeys) {
-        // Check each key
-        for (String providerKey : providerKeys ?: []) {
-            // Lower case the key
-            providerKey = providerKey.toLowerCase()
+        // Whether we're allowing any authentication provider
+        boolean allowAll = providerKeys.size() == 1 && providerKeys[0] == '*'
+
+        // Check each provider
+        for (Map.Entry<String, AuthenticationProvider> providerEntry : providers) {
+            // Lower case the provider key
+            String providerKey = providerEntry.key.toLowerCase()
 
             // If the key is not valid, skip it
-            if (!providers.containsKey(providerKey)) {
-                log.warn("provider \"${providerKey}\" is invalid")
+            if (!allowAll && !providerKeys.contains(providerKey)) {
                 continue
             }
 
             // Attempt authentication
-            ClientSecurityContext context = providers[providerKey].authenticate(request)
+            ClientSecurityContext context = providerEntry.value.authenticate(request)
 
             // If we have a successful login, return it
             if (context) {

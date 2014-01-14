@@ -28,7 +28,6 @@ import javax.ws.rs.Path
 
 import org.apache.log4j.Logger
 import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.codehaus.groovy.grails.commons.spring.GrailsApplicationContext
 import org.grails.jaxrs.DefaultGrailsResourceClass
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
@@ -49,13 +48,7 @@ class JaxrsSecurityContext implements InitializingBean {
     /**
      * Holder for the currently logged in user.
      */
-    private static ThreadLocal authenticationHolder = new ThreadLocal<ClientSecurityContext>()
-
-    /**
-     * Application context.
-     */
-    @Autowired
-    GrailsApplicationContext applicationContext
+    private static ThreadLocal<ClientSecurityContext> authenticationHolder = new ThreadLocal<ClientSecurityContext>()
 
     /**
      * Grails application.
@@ -66,21 +59,6 @@ class JaxrsSecurityContext implements InitializingBean {
      * Logger
      */
     Logger log = Logger.getLogger(getClass())
-
-    /**
-     * Api Key header name.
-     */
-    String apiKeyHeader
-
-    /**
-     * Api Key query param.
-     */
-    String apiKeyQuery
-
-    /**
-     * Domain containing api key instances.
-     */
-    String apiKeyDomain
 
     /**
      * Default set of allowed auth methods.
@@ -153,15 +131,12 @@ class JaxrsSecurityContext implements InitializingBean {
         }
 
         // Get the config key
-        ConfigObject userConfig = grailsApplication.config.grails.plugin.jaxrs.security.clone()
+        ConfigObject userConfig = grailsApplication.config.jaxrs.security
         if (userConfig) {
             config.merge(userConfig)
         }
 
         // Load config options from the config
-        apiKeyHeader = config.apiKey?.header
-        apiKeyQuery  = config.apiKey?.query
-        apiKeyDomain = config.apiKey?.domain
         rejectIfNoRule = config.rejectIfNoRule
         enabled = config.enabled
 
@@ -390,5 +365,25 @@ class JaxrsSecurityContext implements InitializingBean {
     public void registerAuthenticationProvider(AuthenticationProvider provider) {
         log.debug("registering authentication provider ${provider.class}")
         authBroker.registerAuthenticationProvider(provider)
+    }
+
+    /**
+     * Returns the client security context for the caller's thread, or null if one is not set.
+     *
+     * @return
+     */
+    public ClientSecurityContext getClientSecurityContext() {
+        authenticationHolder.get()
+    }
+
+    /**
+     * Returns the logged in user object, if a user is logged in.
+     *
+     * Note that anonymous users will always return null.
+     *
+     * @return
+     */
+    public JaxrsClient getLoggedInUser() {
+        return authenticationHolder.get()?.getClient()
     }
 }

@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 security {
-    apiKey {
-        header = 'X-Authentication-ApiKey'
-        query = 'apikey'
-    }
-    authProviders = ['header-apikey', 'query-apikey']
+    /**
+     *
+     */
+    authProviders = ['*']
     rejectIfNoRule = true
     enabled = true
 }

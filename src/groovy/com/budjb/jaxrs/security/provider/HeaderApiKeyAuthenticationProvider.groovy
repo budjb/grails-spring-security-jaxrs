@@ -19,6 +19,9 @@ import grails.util.Holders
 
 import javax.servlet.http.HttpServletRequest
 
+import org.apache.log4j.Logger
+import org.codehaus.groovy.grails.commons.GrailsApplication
+
 import com.budjb.jaxrs.security.AuthenticationProvider
 import com.budjb.jaxrs.security.ClientSecurityContext
 import com.budjb.jaxrs.security.JaxrsClient
@@ -26,6 +29,16 @@ import com.budjb.jaxrs.security.exception.ForbiddenClientException
 import com.budjb.jaxrs.security.exception.UnauthorizedClientException
 
 class HeaderApiKeyAuthenticationProvider extends AuthenticationProvider {
+    /**
+     * Grails application.
+     */
+    GrailsApplication grailsApplication
+
+    /**
+     * Logger.
+     */
+    protected static Logger log = Logger.getLogger(HeaderApiKeyAuthenticationProvider)
+
     /**
      * Returns the name of this provider.
      */
@@ -47,7 +60,7 @@ class HeaderApiKeyAuthenticationProvider extends AuthenticationProvider {
      */
     public ClientSecurityContext authenticate(HttpServletRequest request) throws UnauthorizedClientException, ForbiddenClientException {
         // Grab the api key
-        String apiKey = request.getHeader('X-Authentication-ApiKey')
+        String apiKey = request.getHeader(getAuthHeader())
 
         // Done if the key is not present
         if (!apiKey) {
@@ -63,5 +76,14 @@ class HeaderApiKeyAuthenticationProvider extends AuthenticationProvider {
         ApiKeyCredentials credentials = new ApiKeyCredentials(apiKey)
 
         return new ClientSecurityContext(credentials)
+    }
+
+    /**
+     * Returns the header name that should contain the api key value.
+     *
+     * @return
+     */
+    protected String getAuthHeader() {
+        return grailsApplication.config.jaxrs.security.apiKey.header ?: 'X-Authorization-ApiKey'
     }
 }

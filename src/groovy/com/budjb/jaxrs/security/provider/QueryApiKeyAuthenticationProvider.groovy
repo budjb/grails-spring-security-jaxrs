@@ -18,6 +18,8 @@ package com.budjb.jaxrs.security.provider
 import grails.util.Holders
 
 import javax.servlet.http.HttpServletRequest
+import org.apache.log4j.Logger
+import org.codehaus.groovy.grails.commons.GrailsApplication
 
 import com.budjb.jaxrs.security.AuthenticationProvider
 import com.budjb.jaxrs.security.ClientSecurityContext
@@ -26,6 +28,16 @@ import com.budjb.jaxrs.security.exception.ForbiddenClientException
 import com.budjb.jaxrs.security.exception.UnauthorizedClientException
 
 class QueryApiKeyAuthenticationProvider extends AuthenticationProvider {
+    /**
+     * Grails application
+     */
+    GrailsApplication grailsApplication
+
+    /**
+     * Logger.
+     */
+    protected static Logger log = Logger.getLogger(QueryApiKeyAuthenticationProvider)
+
     /**
      * Returns the name of this provider.
      */
@@ -47,7 +59,7 @@ class QueryApiKeyAuthenticationProvider extends AuthenticationProvider {
      */
     public ClientSecurityContext authenticate(HttpServletRequest request) throws UnauthorizedClientException, ForbiddenClientException {
         // Grab the api key
-        String apiKey = request.getParameter('apikey')
+        String apiKey = request.getParameter(getQueryParameter())
 
         // Done if the key is not present
         if (!apiKey) {
@@ -63,5 +75,14 @@ class QueryApiKeyAuthenticationProvider extends AuthenticationProvider {
         ApiKeyCredentials credentials = new ApiKeyCredentials(apiKey)
 
         return new ClientSecurityContext(credentials)
+    }
+
+    /**
+     * Returns the query parameter that contains the parameter name in the query string.
+     *
+     * @return
+     */
+    protected String getQueryParameter() {
+        return grailsApplication.config.jaxrs.security.apiKey.query ?: 'apikey'
     }
 }
