@@ -33,6 +33,7 @@ grails.project.dependency.resolution = {
             export = false
         }
 
-        compile ':jaxrs:0.6'
+        compile ':spring-security-core:2.0-RC2'
+        compile ':jaxrs:0.9'
     }
 }
