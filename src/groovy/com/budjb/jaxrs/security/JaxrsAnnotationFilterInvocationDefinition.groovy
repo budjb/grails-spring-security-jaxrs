@@ -2,18 +2,18 @@ package com.budjb.jaxrs.security
 
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.commons.GrailsClass
-import org.codehaus.groovy.grails.web.mapping.UrlMappingsHolder;
+import org.codehaus.groovy.grails.web.mapping.UrlMappingsHolder
 import org.springframework.http.HttpMethod
-import org.springframework.security.access.ConfigAttribute;
-import org.springframework.security.web.FilterInvocation;
-import org.springframework.util.Assert;
+import org.springframework.security.access.ConfigAttribute
+import org.springframework.security.web.FilterInvocation
+import org.springframework.util.Assert
 
 import grails.plugin.springsecurity.ReflectionUtils
 import grails.plugin.springsecurity.annotation.Secured
 import grails.plugin.springsecurity.web.access.intercept.AnnotationFilterInvocationDefinition
 
 import java.lang.reflect.Method
-import java.util.Collection;
+import java.util.Collection
 
 import javax.ws.rs.DELETE
 import javax.ws.rs.GET
@@ -28,7 +28,7 @@ class JaxrsAnnotationFilterInvocationDefinition extends AnnotationFilterInvocati
      */
     public void initialize(Object staticRules, UrlMappingsHolder mappingsHolder, GrailsClass[] controllerClasses) {
         // Call the parent
-        super.initialize(staticRules, mappingsHolder, controllerClasses);
+        super.initialize(staticRules, mappingsHolder, controllerClasses)
 
         // Initialize resources
         initializeJaxrs()
@@ -38,8 +38,6 @@ class JaxrsAnnotationFilterInvocationDefinition extends AnnotationFilterInvocati
      * Initializes patterns for jaxrs resources.
      */
     public void initializeJaxrs() {
-        log.debug('initializing jaxrs annotations mappings')
-
         application.resourceClasses.each {
             initializeResource(it)
         }
@@ -51,8 +49,6 @@ class JaxrsAnnotationFilterInvocationDefinition extends AnnotationFilterInvocati
      * @param clazz
      */
     protected void initializeResource(GrailsClass clazz) {
-        log.debug("analyzing resource ${clazz.name}")
-
         // Grab the actual class
         Class resource = clazz.clazz
 
@@ -131,30 +127,30 @@ class JaxrsAnnotationFilterInvocationDefinition extends AnnotationFilterInvocati
      * Returns attributes for a given request, if any exist.
      */
     public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
-        Assert.isTrue(object != null && supports(object.getClass()), "Object must be a FilterInvocation");
+        Assert.isTrue(object != null && supports(object.getClass()), "Object must be a FilterInvocation")
 
-        FilterInvocation filterInvocation = (FilterInvocation)object;
+        FilterInvocation filterInvocation = (FilterInvocation)object
 
-        String url = determineUrl(filterInvocation);
+        String url = determineUrl(filterInvocation)
 
-        Collection<ConfigAttribute> configAttributes;
+        Collection<ConfigAttribute> configAttributes
         try {
             if (url =~ '^/(jaxrs|jaxrs/.*)$') {
                 url = url = filterInvocation.request.forwardURI - filterInvocation.request.contextPath
             }
-            configAttributes = findConfigAttributes(url, filterInvocation.getRequest().getMethod());
+            configAttributes = findConfigAttributes(url, filterInvocation.getRequest().getMethod())
         }
         catch (RuntimeException e) {
-            throw e;
+            throw e
         }
         catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e)
         }
 
         if ((configAttributes == null || configAttributes.isEmpty()) && rejectIfNoRule) {
-            return DENY;
+            return DENY
         }
 
-        return configAttributes;
+        return configAttributes
     }
 }

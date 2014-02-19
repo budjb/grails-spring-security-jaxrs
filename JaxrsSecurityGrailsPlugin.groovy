@@ -15,24 +15,21 @@
  */
 import org.grails.jaxrs.ResourceArtefactHandler
 import org.apache.log4j.Logger
-
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.commons.GrailsClass
 
 import com.budjb.jaxrs.security.JaxrsAnnotationFilterInvocationDefinition
+import com.budjb.jaxrs.security.JaxrsRequestmapFilterInvocationDefinition
+import com.budjb.jaxrs.security.JaxrsInterceptUrlMapFilterInvocationDefinition
 
 import grails.plugin.springsecurity.SpringSecurityUtils
+import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 class JaxrsSecurityGrailsPlugin {
     /**
      * Project version.
      */
-    def version = '0.4'
-
-    /**
-     * Maven group.
-     */
-    def group = 'com.rackspace.rvi'
+    def version = '0.5'
 
     /**
      * Required grails version.
@@ -57,7 +54,7 @@ class JaxrsSecurityGrailsPlugin {
     /**
      * Plugin description.
      */
-    def description = 'Provides a security layer on top of the jax-rs plugin.'
+    def description = 'Enables spring security support for the jax-rs plugin.'
 
     /**
      * Link to documentation.
@@ -121,22 +118,31 @@ class JaxrsSecurityGrailsPlugin {
                 }
             }
         }
-        /*
         else if (securityConfigType == 'Requestmap') {
-            objectDefinitionSource(RequestmapFilterInvocationDefinition) {
+            objectDefinitionSource(JaxrsRequestmapFilterInvocationDefinition) {
                 if (conf.rejectIfNoRule instanceof Boolean) {
                     rejectIfNoRule = conf.rejectIfNoRule
                 }
             }
         }
         else if (securityConfigType == 'InterceptUrlMap') {
-            objectDefinitionSource(InterceptUrlMapFilterInvocationDefinition) {
+            objectDefinitionSource(JaxrsInterceptUrlMapFilterInvocationDefinition) {
                 if (conf.rejectIfNoRule instanceof Boolean) {
                     rejectIfNoRule = conf.rejectIfNoRule
                 }
             }
         }
-        */
+    }
+
+    def doWithDynamicMethods = { ctx ->
+        def conf = SpringSecurityUtils.securityConfig
+        if (!conf || !conf.active) {
+            return
+        }
+
+        for (resourceClass in application.resourceClasses) {
+            addControllerMethods resourceClass.metaClass, ctx
+        }
     }
 
     /**
@@ -153,11 +159,37 @@ class JaxrsSecurityGrailsPlugin {
             if (SpringSecurityUtils.securityConfigType == 'Annotation') {
                 initializeFromAnnotations event.ctx, conf, application
             }
+
+            addControllerMethods application.getResourceClass(event.source.name).metaClass, event.ctx
         }
     }
+
     private void initializeFromAnnotations(ctx, conf, application) {
         JaxrsAnnotationFilterInvocationDefinition afid = ctx.objectDefinitionSource
-        afid.initialize conf.controllerAnnotations.staticRules,
-            ctx.grailsUrlMappingsHolder, application.controllerClasses
+        afid.initialize conf.controllerAnnotations.staticRules, ctx.grailsUrlMappingsHolder, application.controllerClasses
+    }
+
+    private void addControllerMethods(MetaClass mc, ctx) {
+        if (!mc.respondsTo(null, 'getPrincipal')) {
+            mc.getPrincipal = { -> SCH.context?.authentication?.principal }
+        }
+
+        if (!mc.respondsTo(null, 'isLoggedIn')) {
+            mc.isLoggedIn = { -> ctx.springSecurityService.isLoggedIn() }
+        }
+
+        if (!mc.respondsTo(null, 'getAuthenticatedUser')) {
+            mc.getAuthenticatedUser = { ->
+                if (!ctx.springSecurityService.isLoggedIn()) return null
+                String userClassName = SpringSecurityUtils.securityConfig.userLookup.userDomainClassName
+                def dc = ctx.grailsApplication.getDomainClass(userClassName)
+                if (!dc) {
+                    throw new IllegalArgumentException("The specified user domain class '$userClassName' is not a domain class")
+                }
+                Class User = dc.clazz
+                String usernamePropertyName = SpringSecurityUtils.securityConfig.userLookup.usernamePropertyName
+                User.findWhere((usernamePropertyName): SCH.context.authentication.principal.username)
+            }
+        }
     }
 }
