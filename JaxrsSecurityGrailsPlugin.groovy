@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.budjb.jaxrs.security.JaxrsSecurityContext
-import com.budjb.jaxrs.security.JaxrsAuthenticationProviderArtefactHandler
-import com.budjb.jaxrs.security.GrailsJaxrsAuthenticationProviderClass
-import com.budjb.jaxrs.security.provider.HeaderApiKeyAuthenticationProvider
-import com.budjb.jaxrs.security.provider.QueryApiKeyAuthenticationProvider
 import org.grails.jaxrs.ResourceArtefactHandler
 import org.apache.log4j.Logger
 
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.commons.GrailsClass
+
+import com.budjb.jaxrs.security.JaxrsAnnotationFilterInvocationDefinition
+
+import grails.plugin.springsecurity.SpringSecurityUtils
 
 class JaxrsSecurityGrailsPlugin {
     /**
@@ -86,14 +85,12 @@ class JaxrsSecurityGrailsPlugin {
     def watchedResources = [
         "file:./grails-app/resources/**Resource.groovy",
         "file:./plugins/*/grails-app/resources/**Resource.groovy",
-        "file:./grails-app/jaxrs-security-auth/**AuthenticationProvider.groovy",
-        "file:./plugins/*/grails-app/jaxrs-security-auth/**AuthenticationProvider.groovy"
     ]
 
     /**
      * Load order.
      */
-    def loadAfter = ['jaxrs']
+    def loadAfter = ['jaxrs', 'spring-security-core']
 
     /**
      * Logger.
@@ -101,92 +98,66 @@ class JaxrsSecurityGrailsPlugin {
     Logger log = Logger.getLogger('com.budjb.jaxrs.security.JaxrsSecurityGrailsPlugin')
 
     /**
-     * Customer artefacts.
-     */
-    def artefacts = [
-        new JaxrsAuthenticationProviderArtefactHandler()
-    ]
-
-    /**
      * Bean configuration.
      */
     def doWithSpring = {
-        // Built-in providers
-        "${HeaderApiKeyAuthenticationProvider.name}"(HeaderApiKeyAuthenticationProvider) { bean ->
-            bean.scope = 'singleton'
-            bean.autowire = true
-        }
-        "${QueryApiKeyAuthenticationProvider.name}"(QueryApiKeyAuthenticationProvider) { bean ->
-            bean.scope = 'singleton'
-            bean.autowire = true
+        // Get the spring security config
+        def conf = SpringSecurityUtils.securityConfig
+
+        // Get the configured security type
+        String securityConfigType = SpringSecurityUtils.securityConfigType
+        if (!(securityConfigType in ['Annotation', 'Requestmap', 'InterceptUrlMap'])) {
+            securityConfigType = 'Annotation'
         }
 
-        // Register client providers
-        application.jaxrsAuthenticationProviderClasses.each { GrailsClass clazz ->
-            "${clazz.fullName}"(clazz.clazz) { bean ->
-                bean.scope = 'singleton'
-                bean.autowire = true
+        if (securityConfigType == 'Annotation') {
+            objectDefinitionSource(JaxrsAnnotationFilterInvocationDefinition) {
+                application = ref('grailsApplication')
+                grailsUrlConverter = ref('grailsUrlConverter')
+                responseMimeTypesApi = ref('responseMimeTypesApi')
+                boolean lowercase = conf.controllerAnnotations.lowercase // true
+                if (conf.rejectIfNoRule instanceof Boolean) {
+                    rejectIfNoRule = conf.rejectIfNoRule
+                }
             }
         }
-
-        // Security context
-        'jaxrsSecurityContext'(JaxrsSecurityContext) { bean ->
-            bean.autowire = 'byName'
+        /*
+        else if (securityConfigType == 'Requestmap') {
+            objectDefinitionSource(RequestmapFilterInvocationDefinition) {
+                if (conf.rejectIfNoRule instanceof Boolean) {
+                    rejectIfNoRule = conf.rejectIfNoRule
+                }
+            }
         }
-    }
-
-    /**
-     * Application context actions.
-     */
-    def doWithApplicationContext = { applicationContext ->
-        reloadJaxrsSecurityContext(application, applicationContext.getBean('jaxrsSecurityContext'))
+        else if (securityConfigType == 'InterceptUrlMap') {
+            objectDefinitionSource(InterceptUrlMapFilterInvocationDefinition) {
+                if (conf.rejectIfNoRule instanceof Boolean) {
+                    rejectIfNoRule = conf.rejectIfNoRule
+                }
+            }
+        }
+        */
     }
 
     /**
      * Change event on watched resources.
      */
     def onChange = { event ->
-        if (!event.ctx) {
+        def conf = SpringSecurityUtils.securityConfig
+        if (!conf || !conf.active) {
             return
         }
 
-        if (application.isArtefactOfType(ResourceArtefactHandler.TYPE, event.source)) {
-            reloadJaxrsSecurityContext(application, event.ctx.getBean('jaxrsSecurityContext'))
-        }
-        else if (application.isArtefactOfType(JaxrsAuthenticationProviderArtefactHandler.TYPE, event.source)) {
-            GrailsJaxrsAuthenticationProviderClass converterClass = application.addArtefact(JaxrsAuthenticationProviderArtefactHandler.TYPE, event.source)
-            beans {
-                "${converterClass.propertyName}"(converterClass.clazz) { bean ->
-                    bean.scope = 'singleton'
-                    bean.autowire = true
-                }
-            }.registerBeans(event.ctx)
+        if (event.source && application.isResourceClass(event.source)) {
 
-            reloadJaxrsSecurityContext(application, event.ctx.getBean('jaxrsSecurityContext'))
+            if (SpringSecurityUtils.securityConfigType == 'Annotation') {
+                initializeFromAnnotations event.ctx, conf, application
+            }
         }
     }
-
-    /**
-     * Configuration change event.
-     */
-    def onConfigChange = { event ->
-        reloadJaxrsSecurityContext(application, event.ctx.getBean('jaxrsSecurityContext'))
-    }
-
-    /**
-     * Reloads the JaxrsSecurityContext.
-     *
-     * @param context
-     * @return
-     */
-    def reloadJaxrsSecurityContext(GrailsApplication application, JaxrsSecurityContext context) {
-        context.initialize()
-
-        application.jaxrsAuthenticationProviderClasses.each { GrailsClass clazz ->
-            context.registerAuthenticationProvider(application.mainContext.getBean(clazz.fullName))
-        }
-
-        context.registerAuthenticationProvider(application.mainContext.getBean(HeaderApiKeyAuthenticationProvider.name))
-        context.registerAuthenticationProvider(application.mainContext.getBean(QueryApiKeyAuthenticationProvider.name))
+    private void initializeFromAnnotations(ctx, conf, application) {
+        JaxrsAnnotationFilterInvocationDefinition afid = ctx.objectDefinitionSource
+        afid.initialize conf.controllerAnnotations.staticRules,
+            ctx.grailsUrlMappingsHolder, application.controllerClasses
     }
 }
