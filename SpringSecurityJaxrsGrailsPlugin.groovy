@@ -25,7 +25,7 @@ import com.budjb.jaxrs.security.JaxrsInterceptUrlMapFilterInvocationDefinition
 import grails.plugin.springsecurity.SpringSecurityUtils
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
-class JaxrsSecurityGrailsPlugin {
+class SpringSecurityJaxrsGrailsPlugin {
     /**
      * Project version.
      */
@@ -92,7 +92,7 @@ class JaxrsSecurityGrailsPlugin {
     /**
      * Logger.
      */
-    Logger log = Logger.getLogger('com.budjb.jaxrs.security.JaxrsSecurityGrailsPlugin')
+    Logger log = Logger.getLogger('com.budjb.jaxrs.security.SpringSecurityJaxrsGrailsPlugin')
 
     /**
      * Bean configuration.

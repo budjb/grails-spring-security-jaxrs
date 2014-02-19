@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>jaxrs-security</name>
+	<name>grails-spring-security-jaxrs</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -26,7 +26,7 @@
 		<link>
 			<name>.link_to_grails_plugins</name>
 			<type>2</type>
-			<locationURI>GRAILS_ROOT/2.1.1/projects/jaxrs-security/plugins</locationURI>
+			<locationURI>GRAILS_ROOT/2.1.1/projects/spring-security-jaxrs/plugins</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
