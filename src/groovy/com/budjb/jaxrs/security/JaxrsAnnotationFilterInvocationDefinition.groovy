@@ -135,7 +135,7 @@ class JaxrsAnnotationFilterInvocationDefinition extends AnnotationFilterInvocati
      * @return
      */
     protected String buildPattern(String base, String resource) {
-        return "${base ?: ''}/${resource ?: ''}".replaceAll(/\/+/, '/').replaceAll(/\{.*\}/, '.*').replaceAll(/\/$/, '')
+        return "${base ?: ''}/${resource ?: ''}".replaceAll(/\/+/, '/').replaceAll(/\{.*\}/, '*').replaceAll(/\/$/, '')
     }
 
     /**
