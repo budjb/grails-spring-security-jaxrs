@@ -128,6 +128,6 @@ class JaxrsRequestmapFilterInvocationDefinition extends RequestmapFilterInvocati
             log.trace("config for '${url}' is '${match.pattern}':${match.configAttributes}")
         }
 
-        return match.configAttributes
+        return match?.configAttributes
     }
 }

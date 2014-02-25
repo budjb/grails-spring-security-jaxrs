@@ -241,6 +241,6 @@ class JaxrsAnnotationFilterInvocationDefinition extends AnnotationFilterInvocati
             log.trace("config for '${url}' is '${match.pattern}':${match.configAttributes}")
         }
 
-        return match.configAttributes
+        return match?.configAttributes
     }
 }
