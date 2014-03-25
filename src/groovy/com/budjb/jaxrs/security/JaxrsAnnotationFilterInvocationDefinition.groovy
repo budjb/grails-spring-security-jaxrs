@@ -105,7 +105,11 @@ class JaxrsAnnotationFilterInvocationDefinition extends AnnotationFilterInvocati
 
             // If security was requested, add the pattern
             if (resourceSecurity || classSecurity) {
+                log.trace("'${buildPattern(classPath, resourcePath)}' added to mapping")
                 storeMapping(buildPattern(classPath, resourcePath), httpMethod, ReflectionUtils.buildConfigAttributes(resourceSecurity ?: classSecurity))
+            }
+            else {
+                log.trace("'${buildPattern(classPath, resourcePath)}' not added to mapping because it lacked security")
             }
         }
     }
