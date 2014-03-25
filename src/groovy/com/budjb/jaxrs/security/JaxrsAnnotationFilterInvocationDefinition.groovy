@@ -85,16 +85,17 @@ class JaxrsAnnotationFilterInvocationDefinition extends AnnotationFilterInvocati
 
         // Set up each resource method
         resource.declaredMethods.each { method ->
+            // Get the resource path
+            String resourcePath = method.getAnnotation(Path)?.value() ?: ''
+
             // Get the method
             HttpMethod httpMethod = getJaxrsHttpMethod(method)
 
             // No method, no security
             if (!httpMethod) {
+                log.trace("'${buildPattern(classPath, resourcePath)}' does not have an HTTP method")
                 return
             }
-
-            // Get the resource path
-            String resourcePath = method.getAnnotation(Path)?.value() ?: ''
 
             // Get the resource security config
             Collection<String> resourceSecurity = null
