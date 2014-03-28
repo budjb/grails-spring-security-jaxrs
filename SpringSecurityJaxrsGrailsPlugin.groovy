@@ -23,13 +23,15 @@ import com.budjb.jaxrs.security.JaxrsRequestmapFilterInvocationDefinition
 import com.budjb.jaxrs.security.JaxrsInterceptUrlMapFilterInvocationDefinition
 
 import grails.plugin.springsecurity.SpringSecurityUtils
+
 import org.springframework.security.core.context.SecurityContextHolder as SCH
+import org.springframework.security.web.context.NullSecurityContextRepository
 
 class SpringSecurityJaxrsGrailsPlugin {
     /**
      * Project version.
      */
-    def version = '0.5.6'
+    def version = '0.5.7'
 
     /**
      * Required grails version.
@@ -132,6 +134,9 @@ class SpringSecurityJaxrsGrailsPlugin {
                 }
             }
         }
+
+        // Make the security context repository stateless (disable sessions)
+        securityContextRepository(NullSecurityContextRepository)
     }
 
     def doWithDynamicMethods = { ctx ->

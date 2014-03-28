@@ -28,9 +28,12 @@ import grails.plugin.springsecurity.InterceptedUrl
 import grails.plugin.springsecurity.ReflectionUtils
 import grails.plugin.springsecurity.annotation.Secured
 import grails.plugin.springsecurity.web.access.intercept.AnnotationFilterInvocationDefinition
+import org.springframework.security.access.SecurityConfig
 
 import java.lang.reflect.Method
+import java.util.ArrayList
 import java.util.Collection
+import java.util.Collections
 
 import javax.ws.rs.DELETE
 import javax.ws.rs.GET
@@ -44,6 +47,16 @@ class JaxrsAnnotationFilterInvocationDefinition extends AnnotationFilterInvocati
      * Logger.
      */
     protected Logger log = Logger.getLogger(getClass())
+
+    /**
+     * Anonymous permission.
+     */
+    protected static final Collection<ConfigAttribute> ANONYMOUS
+    static {
+        Collection<ConfigAttribute> list = new ArrayList<ConfigAttribute>(1)
+        list.add(new SecurityConfig("IS_AUTHENTICATED_ANONYMOUSLY"))
+        ANONYMOUS = Collections.unmodifiableCollection(list)
+    }
 
     /**
      * Initializes patterns.
@@ -108,8 +121,13 @@ class JaxrsAnnotationFilterInvocationDefinition extends AnnotationFilterInvocati
                 log.trace("'${buildPattern(classPath, resourcePath)}' added to mapping")
                 storeMapping(buildPattern(classPath, resourcePath), httpMethod, ReflectionUtils.buildConfigAttributes(resourceSecurity ?: classSecurity))
             }
+            else if (rejectIfNoRule) {
+                log.trace("'${buildPattern(classPath, resourcePath)}' added to mapping as always deny")
+                storeMapping(buildPattern(classPath, resourcePath), httpMethod, DENY)
+            }
             else {
-                log.trace("'${buildPattern(classPath, resourcePath)}' not added to mapping because it lacked security")
+                log.trace("'${buildPattern(classPath, resourcePath)}' added to mapping as anonymous")
+                storeMapping(buildPattern(classPath, resourcePath), httpMethod, ANONYMOUS)
             }
         }
     }
@@ -183,7 +201,14 @@ class JaxrsAnnotationFilterInvocationDefinition extends AnnotationFilterInvocati
             throw new RuntimeException(e)
         }
 
-        if ((configAttributes == null || configAttributes.isEmpty()) && rejectIfNoRule) {
+        // If no rule was found, this should be a resource that doesn't exist,
+        // so allow it through auth so it can 404.
+        if (configAttributes == null) {
+            return ANONYMOUS
+        }
+
+        // Always deny empty configs
+        if (configAttributes.isEmpty()) {
             return DENY
         }
 
