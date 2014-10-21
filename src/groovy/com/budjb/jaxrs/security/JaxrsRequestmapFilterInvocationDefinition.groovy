@@ -52,6 +52,7 @@ class JaxrsRequestmapFilterInvocationDefinition extends RequestmapFilterInvocati
             // Otherwise, use the normal find method.
             if (url =~ '^/(jaxrs|jaxrs/.*)$') {
                 url = filterInvocation.request.forwardURI - filterInvocation.request.contextPath
+                url = url.replaceAll('/$', '')
                 configAttributes = findJaxrsConfigAttributes(url, filterInvocation.request.method)
             }
             else {

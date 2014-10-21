@@ -24,6 +24,8 @@ grails.project.dependency.resolution = {
     repositories {
         grailsCentral()
         mavenCentral()
+
+        mavenRepo "http://maven.restlet.com"
     }
 
     plugins {
