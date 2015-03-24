@@ -17,7 +17,7 @@ package com.budjb.jaxrs.security
 
 import java.util.Collection
 
-import org.apache.log4j.Logger;
+import org.apache.log4j.Logger
 import org.springframework.http.HttpMethod
 import org.springframework.security.access.ConfigAttribute
 import org.springframework.security.web.FilterInvocation
@@ -31,47 +31,6 @@ class JaxrsInterceptUrlMapFilterInvocationDefinition extends InterceptUrlMapFilt
      * Logger.
      */
     protected Logger log = Logger.getLogger(getClass())
-
-    /**
-     * Returns attributes for a given request, if any exist.
-     */
-    public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
-        // Sanity check the input
-        Assert.isTrue(object != null && supports(object.getClass()), "Object must be a FilterInvocation")
-
-        // Cast the object
-        FilterInvocation filterInvocation = (FilterInvocation)object
-
-        // Allow the parent to determine the URL based on controller/action
-        String url = determineUrl(filterInvocation)
-
-        // Attempt to find a match for attributes
-        Collection<ConfigAttribute> configAttributes
-        try {
-            // If the controller is jaxrs, run the find method specific to resources.
-            // Otherwise, use the normal find method.
-            if (url =~ '^/(jaxrs|jaxrs/.*)$') {
-                url = filterInvocation.request.forwardURI - filterInvocation.request.contextPath
-                url = url.replaceAll('/$', '')
-                configAttributes = findJaxrsConfigAttributes(url, filterInvocation.request.method)
-            }
-            else {
-                configAttributes = findConfigAttributes(url, filterInvocation.request.method)
-            }
-        }
-        catch (RuntimeException e) {
-            throw e
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e)
-        }
-
-        if ((configAttributes == null || configAttributes.isEmpty()) && rejectIfNoRule) {
-            return DENY
-        }
-
-        return configAttributes
-    }
 
     /**
      * Attempts to find a set of config attributes that matches a given URL.
