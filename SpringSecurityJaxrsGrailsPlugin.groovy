@@ -20,6 +20,7 @@ import com.budjb.jaxrs.security.ObjectDefinitionSourceRegistry
 import grails.plugin.springsecurity.SpringSecurityUtils
 import org.apache.log4j.Logger
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor
+import org.springframework.security.web.context.NullSecurityContextRepository
 
 class SpringSecurityJaxrsGrailsPlugin {
     /**
@@ -152,8 +153,9 @@ class SpringSecurityJaxrsGrailsPlugin {
             }
         }
 
-        // Make the security context repository stateless (disable sessions)
-        //securityContextRepository(NullSecurityContextRepository)
+        if (conf.jaxrs.disableSessions instanceof Boolean && conf.jaxrs.disableSessions) {
+            securityContextRepository(NullSecurityContextRepository)
+        }
     }
 
     def doWithApplicationContext = { ctx ->
@@ -179,7 +181,6 @@ class SpringSecurityJaxrsGrailsPlugin {
         }
     }
 
-    /*
     def onChange = { event ->
         def conf = SpringSecurityUtils.securityConfig
         if (!conf || !conf.active) {
@@ -187,20 +188,11 @@ class SpringSecurityJaxrsGrailsPlugin {
         }
 
         if (event.source && application.isResourceClass(event.source)) {
-
-            if (SpringSecurityUtils.securityConfigType == 'Annotation') {
-                initializeFromAnnotations event.ctx, conf, application
-            }
+            event.ctx.jaxrsObjectDefinitionSource.initialize(application.resourceClasses)
 
             addControllerMethods application.getResourceClass(event.source.name).metaClass, event.ctx
         }
     }
-
-    private void initializeFromAnnotations(ctx, conf, application) {
-        JaxrsAnnotationFilterInvocationDefinition afid = ctx.objectDefinitionSource
-        afid.initialize conf.controllerAnnotations.staticRules, ctx.grailsUrlMappingsHolder, application.controllerClasses
-    }
-    */
 
     private void addControllerMethods(MetaClass mc, ctx) {
         if (!mc.respondsTo(null, 'getPrincipal')) {
