@@ -37,45 +37,34 @@ class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDef
      * @param clazz
      */
     protected void initializeResource(GrailsClass clazz) {
-        // Grab the actual class
         Class resource = clazz.clazz
 
-        // Get the base path of the resource
         String classPath = resource.getAnnotation(Path)?.value()
 
-        // Get the base security config
         Collection<String> classSecurity = null
         if (findSecuredAnnotation(resource.annotations)) {
             classSecurity = getValue(findSecuredAnnotation(resource.annotations))
         }
 
-        // Set up each resource method
         resource.declaredMethods.each { method ->
-            // Get the resource path
             String resourcePath = method.getAnnotation(Path)?.value() ?: ''
 
-            // Get the method
             HttpMethod httpMethod = getJaxrsHttpMethod(method)
 
-            // No method, no security
             if (!httpMethod) {
                 log.trace("'${buildPattern(classPath, resourcePath)}' does not have an HTTP method")
                 return
             }
 
-            // Build the pattern
             String pattern = buildPattern(classPath, resourcePath)
 
-            // Store the pattern so we can determine if an endpoint actually exists or not
             patterns << pattern
 
-            // Get the resource security config
             Collection<String> resourceSecurity = null
             if (findSecuredAnnotation(method.annotations)) {
                 resourceSecurity = getValue(findSecuredAnnotation(method.annotations))
             }
 
-            // If security was requested, add the pattern
             if (resourceSecurity || classSecurity) {
                 log.trace("'$pattern' added to mapping")
                 storeMapping(pattern, httpMethod, ReflectionUtils.buildConfigAttributes(resourceSecurity ?: classSecurity))
@@ -109,6 +98,12 @@ class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDef
         return null
     }
 
+    /**
+     * Find an appropriate @Secured annotation give a list of annotations.
+     *
+     * @param annotations
+     * @return
+     */
     protected Annotation findSecuredAnnotation(Annotation[] annotations) {
         log.debug(annotations.toString())
         Annotation annotation = annotations.find {
@@ -130,10 +125,22 @@ class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDef
         return null
     }
 
+    /**
+     * Returns the value of a @Secured annotation.
+     *
+     * @param annotation
+     * @return
+     */
     protected Collection<String> getValue(grails.plugin.springsecurity.annotation.Secured annotation) {
         return new LinkedHashSet<String>(Arrays.asList(annotation.value()))
     }
 
+    /**
+     * Returns the value of a @Secured annotation.
+     *
+     * @param annotation
+     * @return
+     */
     protected Collection<String> getValue(org.springframework.security.access.annotation.Secured annotation) {
         return new LinkedHashSet<String>(Arrays.asList(annotation.value()))
     }

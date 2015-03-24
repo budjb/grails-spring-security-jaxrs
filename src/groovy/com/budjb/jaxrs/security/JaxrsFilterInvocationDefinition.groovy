@@ -1,7 +1,26 @@
+/*
+ * Copyright 2015 Bud Byrd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.budjb.jaxrs.security
 
+import grails.plugin.springsecurity.InterceptedUrl
 import grails.plugin.springsecurity.web.access.intercept.AbstractFilterInvocationDefinition
 import org.codehaus.groovy.grails.commons.GrailsClass
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.http.HttpMethod
 import org.springframework.security.access.ConfigAttribute
 import org.springframework.security.access.SecurityConfig
 import org.springframework.security.web.FilterInvocation
@@ -10,6 +29,11 @@ import org.springframework.util.Assert
 import javax.ws.rs.Path
 
 class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition {
+    /**
+     * Logger.
+     */
+    Logger log = LoggerFactory.getLogger(JaxrsFilterInvocationDefinition)
+
     /**
      * Anonymous permission.
      */
@@ -23,7 +47,7 @@ class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition
     /**
      * List of all known path patterns in all JaxRS resources.
      */
-    protected List<String> patterns
+    protected List<String> patterns = []
 
     /**
      * Whether to allow an HTTP 404 if a resource does not exist.
@@ -97,5 +121,49 @@ class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition
         }
 
         return configAttributes
+    }
+
+    /**
+     * Attempts to find a set of config attributes that matches a given URL.
+     *
+     * @param url
+     * @param requestMethod
+     * @return
+     * @throws Exception
+     */
+    protected Collection<ConfigAttribute> findConfigAttributes(
+        final String url, final String requestMethod) throws Exception {
+        initialize()
+
+        InterceptedUrl match
+        boolean isMatchAbsolute
+        boolean stopAtFirstMatch = stopAtFirstMatch()
+
+        compiled.each { candidate ->
+            if (candidate.getHttpMethod() != null && requestMethod != null && candidate.getHttpMethod() != HttpMethod.valueOf(requestMethod)) {
+                log.trace("Request '{} {}' doesn't match '{} {}'", requestMethod, url, candidate.httpMethod, candidate.pattern)
+                return
+            }
+
+            if (urlMatcher.match(candidate.getPattern(), url)) {
+                boolean isCandidateAbsolute = !candidate.pattern.contains('*')
+
+                log.trace("possible candidate for '{}': '{}':{}", url, candidate.pattern, candidate.configAttributes)
+
+                if (!match || (isCandidateAbsolute && !isMatchAbsolute) || (!stopAtFirstMatch && isCandidateAbsolute == isMatchAbsolute)) {
+                    match = candidate
+                    isMatchAbsolute = !match.pattern.contains('*')
+                    log.trace("new candidate for '{}': '{}':{}", url, candidate.pattern, candidate.configAttributes)
+                }
+            }
+        }
+
+        if (!match) {
+            log.trace("no config for '{}'", url)
+            return null
+        }
+
+        log.trace("config for '{}' is '{}':{}", url, match.pattern, match.configAttributes)
+        return match.configAttributes
     }
 }
