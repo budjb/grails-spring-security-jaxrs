@@ -17,6 +17,7 @@ package com.budjb.jaxrs.security
 
 import grails.plugin.springsecurity.InterceptedUrl
 import grails.plugin.springsecurity.ReflectionUtils
+import org.codehaus.groovy.grails.commons.GrailsClass
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpMethod
@@ -27,48 +28,47 @@ class JaxrsRequestmapFilterInvocationDefinition extends JaxrsFilterInvocationDef
      */
     protected Logger log = LoggerFactory.getLogger(JaxrsRequestmapFilterInvocationDefinition)
 
+    /**
+     * Initialize security rules.
+     *
+     * @param resourceClasses
+     */
     @Override
-    void initialize() {
-        if (initialized) {
-            return
-        }
+    void initialize(GrailsClass[] resourceClasses) {
+        super.initialize(resourceClasses)
 
         try {
-            reset()
-            initialized = true
+            resetConfigs()
+
+            loadRequestmaps().each {
+                compileAndStoreMapping(it)
+            }
+
+            if (log.isTraceEnabled()) {
+                log.trace("configs: {}", getConfigAttributeMap())
+            }
         }
         catch (RuntimeException e) {
             log.warn("Exception initializing; this is ok if it's at startup and due " +
                 "to GORM not being initialized yet since the first web request will " +
-                "re-initialize. Error message is: {}", e.getMessage());
+                "re-initialize. Error message is: {}", e.getMessage())
         }
     }
 
     /**
-     * Call at startup or when <code>Requestmap</code> instances have been added, removed, or changed.
+     * Load request maps from database.
+     *
+     * @return
      */
-    @Override
-    public synchronized void reset() {
-        resetConfigs()
-
-        loadRequestmaps().each {
-            compileAndStoreMapping(it)
-        }
-
-        if (log.isTraceEnabled()) {
-            log.trace("configs: {}", getConfigAttributeMap())
-        }
-    }
-
     protected List<InterceptedUrl> loadRequestmaps() {
         List<InterceptedUrl> data = new ArrayList<InterceptedUrl>()
 
         boolean supportsHttpMethod = ReflectionUtils.requestmapClassSupportsHttpMethod()
 
-        for (Object requestmap : ReflectionUtils.loadAllRequestmaps()) {
-            String urlPattern = ReflectionUtils.getRequestmapUrl(requestmap)
-            String configAttribute = ReflectionUtils.getRequestmapConfigAttribute(requestmap)
-            HttpMethod method = supportsHttpMethod ? ReflectionUtils.getRequestmapHttpMethod(requestmap) : null
+        ReflectionUtils.loadAllRequestmaps().each {
+            String urlPattern = ReflectionUtils.getRequestmapUrl(it)
+            String configAttribute = ReflectionUtils.getRequestmapConfigAttribute(it)
+            HttpMethod method = supportsHttpMethod ? ReflectionUtils.getRequestmapHttpMethod(it) : null
             data.add(new InterceptedUrl(urlPattern, split(configAttribute), method))
         }
 

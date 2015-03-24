@@ -16,6 +16,7 @@
 package com.budjb.jaxrs.security
 
 import grails.plugin.springsecurity.ReflectionUtils
+import org.codehaus.groovy.grails.commons.GrailsClass
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -29,10 +30,8 @@ class JaxrsInterceptUrlMapFilterInvocationDefinition extends JaxrsFilterInvocati
      * Initializes intercept rules.
      */
     @Override
-    void initialize() {
-        if (initialized) {
-            return
-        }
+    void initialize(GrailsClass[] resourceClasses) {
+        super.initialize(resourceClasses)
 
         Object map = ReflectionUtils.getConfigProperty("interceptUrlMap")
         if (!(map instanceof Map || map instanceof List)) {
@@ -45,8 +44,6 @@ class JaxrsInterceptUrlMapFilterInvocationDefinition extends JaxrsFilterInvocati
         ReflectionUtils.splitMap(map).each {
             compileAndStoreMapping(it)
         }
-
-        initialized = true
     }
 
     /**

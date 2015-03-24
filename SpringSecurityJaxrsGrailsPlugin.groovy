@@ -91,11 +91,15 @@ class SpringSecurityJaxrsGrailsPlugin {
      */
     Logger log = Logger.getLogger('com.budjb.jaxrs.security.SpringSecurityJaxrsGrailsPlugin')
 
-    /**
-     * Bean configuration.
-     */
     def doWithSpring = {
         def conf = SpringSecurityUtils.securityConfig
+        if (!conf || !conf.active) {
+            return
+        }
+
+        SpringSecurityUtils.loadSecondaryConfig 'DefaultJaxrsSecurityConfig'
+        conf = SpringSecurityUtils.securityConfig
+
 
         'objectDefinitionRegistry'(ObjectDefinitionSourceRegistry) { bean ->
             if (conf.rejectIfNoRule instanceof Boolean) {
@@ -192,6 +196,17 @@ class SpringSecurityJaxrsGrailsPlugin {
 
             addControllerMethods application.getResourceClass(event.source.name).metaClass, event.ctx
         }
+    }
+
+    def onConfigChange = { event ->
+        def conf = SpringSecurityUtils.securityConfig
+        if (!conf || !conf.active) {
+            return
+        }
+
+        SpringSecurityUtils.loadSecondaryConfig 'DefaultJaxrsSecurityConfig'
+
+        event.ctx.jaxrsObjectDefinitionSource.initialize(application.resourceClasses)
     }
 
     private void addControllerMethods(MetaClass mc, ctx) {
