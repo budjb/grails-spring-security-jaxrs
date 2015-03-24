@@ -1,10 +1,9 @@
 package com.budjb.jaxrs.security
 
-import grails.plugin.springsecurity.InterceptedUrl
 import grails.plugin.springsecurity.web.access.intercept.AbstractFilterInvocationDefinition
 import org.codehaus.groovy.grails.commons.GrailsClass
-import org.springframework.http.HttpMethod
 import org.springframework.security.access.ConfigAttribute
+import org.springframework.security.access.SecurityConfig
 import org.springframework.security.web.FilterInvocation
 import org.springframework.util.Assert
 
@@ -12,36 +11,50 @@ import javax.ws.rs.Path
 
 class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition {
     /**
-     * List of all known path patterns in all JaxRS resources.
+     * Anonymous permission.
      */
-    List<String> patterns
+    protected static final Collection<ConfigAttribute> ANONYMOUS
+    static {
+        Collection<ConfigAttribute> list = new ArrayList<ConfigAttribute>(1)
+        list.add(new SecurityConfig("IS_AUTHENTICATED_ANONYMOUSLY"))
+        ANONYMOUS = Collections.unmodifiableCollection(list)
+    }
 
     /**
-     * Initializes patterns.
+     * List of all known path patterns in all JaxRS resources.
+     */
+    protected List<String> patterns
+
+    /**
+     * Whether to allow an HTTP 404 if a resource does not exist.
+     */
+    boolean allow404
+
+    /**
+     * Initializes the object definition source.
+     *
+     * @param resourceClasses
      */
     void initialize(GrailsClass[] resourceClasses) {
+        resetConfigs()
+
         resourceClasses.each {
             initializeResource(it)
         }
     }
 
+    /**
+     * Initializes a JaxRS resource.
+     *
+     * @param clazz
+     */
     protected void initializeResource(GrailsClass clazz) {
-        // Grab the actual class
-        Class resource = clazz.clazz
+        Class<?> resource = clazz.clazz
 
-        // Get the base path of the resource
-        String classPath = resource.getAnnotation(Path)?.value()
+        String classPath = resource.getAnnotation(Path)?.value() ?: ''
 
-        // Set up each resource method
         resource.declaredMethods.each { method ->
-            // Get the resource path
-            String resourcePath = method.getAnnotation(Path)?.value() ?: ''
-
-            // Build the pattern
-            String pattern = buildPattern(classPath, resourcePath)
-
-            // Store the pattern so we can determine if an endpoint actually exists or not
-            patterns << pattern
+            patterns << buildPattern(classPath, method.getAnnotation(Path)?.value() ?: '')
         }
     }
 
@@ -59,16 +72,12 @@ class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition
      * Returns attributes for a given request, if any exist.
      */
     Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
-        // Sanity check the input
         Assert.isTrue(object != null && supports(object.getClass()), "Object must be a FilterInvocation")
 
-        // Cast the object
         FilterInvocation filterInvocation = (FilterInvocation) object
 
-        // Allow the parent to determine the URL based on controller/action
         String url = determineUrl(filterInvocation).replaceAll('/*$', '')
 
-        // Attempt to find a match for attributes
         Collection<ConfigAttribute> configAttributes
         try {
             configAttributes = findConfigAttributes(url, filterInvocation.request.method)
@@ -88,65 +97,5 @@ class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition
         }
 
         return configAttributes
-    }
-
-    /**
-     * Attempts to find a set of config attributes that matches a given URL.
-     *
-     * @param url
-     * @param requestMethod
-     * @return
-     * @throws Exception
-     */
-    protected Collection<ConfigAttribute> findConfigAttributes(
-        final String url, final String requestMethod) throws Exception {
-        // Run init
-        initialize()
-
-        // Match markers
-        InterceptedUrl match
-
-        // Whether to stop when a first match is found
-        boolean stopAtFirstMatch = stopAtFirstMatch()
-
-        // Iterate through all known stored patterns
-        for (InterceptedUrl candidate : compiled) {
-            // Skip if the HTTP method doesn't match
-            if (candidate.getHttpMethod() != null && requestMethod != null && candidate.getHttpMethod() != HttpMethod.valueOf(requestMethod)) {
-                log.trace("Request '${requestMethod} ${url}' doesn't match '${candidate.httpMethod} ${candidate.pattern}'")
-                continue
-            }
-
-            // Check for a URL match
-            if (urlMatcher.match(candidate.getPattern(), url)) {
-                // Determine if the candidate is absolute
-                boolean isCandidateAbsolute = !candidate.pattern.contains('*')
-
-                // Determine if the match is absolute
-                boolean isMatchAbsolute = match == null ? false : !match.pattern.contains('*')
-
-                // Log the possible candidate
-                log.trace("possible candidate for '${url}': '${candidate.pattern}':${candidate.configAttributes}")
-
-                // If this is a first match or the pattern is identical, process it
-                if (!match || (isCandidateAbsolute && !isMatchAbsolute) || (!stopAtFirstMatch && isCandidateAbsolute == isMatchAbsolute)) {
-                    // Store the match
-                    match = candidate
-
-                    // Log it
-                    log.trace("new candidate for '${url}': '${candidate.pattern}':${candidate.configAttributes}")
-                }
-            }
-        }
-
-        // Log the result
-        if (!match) {
-            log.trace("no config for '${url}'")
-        }
-        else {
-            log.trace("config for '${url}' is '${match.pattern}':${match.configAttributes}")
-        }
-
-        return match?.configAttributes
     }
 }

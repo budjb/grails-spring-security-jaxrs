@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Bud Byrd
+ * Copyright 2014-2015 Bud Byrd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,79 +15,63 @@
  */
 package com.budjb.jaxrs.security
 
-import java.util.Collection
-
-import org.apache.log4j.Logger
-import org.springframework.http.HttpMethod
-import org.springframework.security.access.ConfigAttribute
-import org.springframework.security.web.FilterInvocation
-import org.springframework.util.Assert
-
 import grails.plugin.springsecurity.InterceptedUrl
-import grails.plugin.springsecurity.web.access.intercept.RequestmapFilterInvocationDefinition
+import grails.plugin.springsecurity.ReflectionUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.http.HttpMethod
 
-class JaxrsRequestmapFilterInvocationDefinition extends RequestmapFilterInvocationDefinition {
+class JaxrsRequestmapFilterInvocationDefinition extends JaxrsFilterInvocationDefinition {
     /**
      * Logger.
      */
-    protected Logger log = Logger.getLogger(getClass())
+    protected Logger log = LoggerFactory.getLogger(JaxrsRequestmapFilterInvocationDefinition)
+
+    @Override
+    void initialize() {
+        if (initialized) {
+            return
+        }
+
+        try {
+            reset()
+            initialized = true
+        }
+        catch (RuntimeException e) {
+            log.warn("Exception initializing; this is ok if it's at startup and due " +
+                "to GORM not being initialized yet since the first web request will " +
+                "re-initialize. Error message is: {}", e.getMessage());
+        }
+    }
 
     /**
-     * Attempts to find a set of config attributes that matches a given URL.
-     *
-     * @param url
-     * @param requestMethod
-     * @return
-     * @throws Exception
+     * Call at startup or when <code>Requestmap</code> instances have been added, removed, or changed.
      */
-    protected Collection<ConfigAttribute> findJaxrsConfigAttributes(final String url, final String requestMethod) throws Exception {
-        // Run init
-        initialize()
+    @Override
+    public synchronized void reset() {
+        resetConfigs()
 
-        // Match markers
-        InterceptedUrl match
-
-        // Whether to stop when a first match is found
-        boolean stopAtFirstMatch = stopAtFirstMatch()
-
-        // Iterate through all known stored patterns
-        for (InterceptedUrl candidate : compiled) {
-            // Skip if the HTTP method doesn't match
-            if (candidate.getHttpMethod() != null && requestMethod != null && candidate.getHttpMethod() != HttpMethod.valueOf(requestMethod)) {
-                log.trace("Request '${requestMethod} ${url}' doesn't match '${candidate.httpMethod} ${candidate.pattern}'")
-                continue
-            }
-
-            // Check for a URL match
-            if (urlMatcher.match(candidate.getPattern(), url)) {
-                // Determine if the candidate is absolute
-                boolean isCandidateAbsolute = !candidate.pattern.contains('*')
-
-                // Determine if the match is absolute
-                boolean isMatchAbsolute = match == null ? false : !match.pattern.contains('*')
-
-                // Log the possible candidate
-                log.trace("possible candidate for '${url}': '${candidate.pattern}':${candidate.configAttributes}")
-
-                // If this is a first match or the pattern is identical, process it
-                if (!match || (isCandidateAbsolute && !isMatchAbsolute) || (!stopAtFirstMatch && isCandidateAbsolute == isMatchAbsolute)) {
-                    // Store the match
-                    match = candidate
-
-                    // Log it
-                    log.trace("new candidate for '${url}': '${candidate.pattern}':${candidate.configAttributes}")
-                }
-            }
+        loadRequestmaps().each {
+            compileAndStoreMapping(it)
         }
 
-        // Log the result
-        if (!match) {
-            log.trace("no config for '${url}'")
+        if (log.isTraceEnabled()) {
+            log.trace("configs: {}", getConfigAttributeMap())
         }
-        else {
-            log.trace("config for '${url}' is '${match.pattern}':${match.configAttributes}")
+    }
+
+    protected List<InterceptedUrl> loadRequestmaps() {
+        List<InterceptedUrl> data = new ArrayList<InterceptedUrl>()
+
+        boolean supportsHttpMethod = ReflectionUtils.requestmapClassSupportsHttpMethod()
+
+        for (Object requestmap : ReflectionUtils.loadAllRequestmaps()) {
+            String urlPattern = ReflectionUtils.getRequestmapUrl(requestmap)
+            String configAttribute = ReflectionUtils.getRequestmapConfigAttribute(requestmap)
+            HttpMethod method = supportsHttpMethod ? ReflectionUtils.getRequestmapHttpMethod(requestmap) : null
+            data.add(new InterceptedUrl(urlPattern, split(configAttribute), method))
         }
 
-        return match?.configAttributes
+        return data
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Bud Byrd
+ * Copyright 2014-2015 Bud Byrd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,79 +15,47 @@
  */
 package com.budjb.jaxrs.security
 
-import java.util.Collection
+import grails.plugin.springsecurity.ReflectionUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-import org.apache.log4j.Logger
-import org.springframework.http.HttpMethod
-import org.springframework.security.access.ConfigAttribute
-import org.springframework.security.web.FilterInvocation
-import org.springframework.util.Assert
-
-import grails.plugin.springsecurity.InterceptedUrl
-import grails.plugin.springsecurity.web.access.intercept.InterceptUrlMapFilterInvocationDefinition
-
-class JaxrsInterceptUrlMapFilterInvocationDefinition extends InterceptUrlMapFilterInvocationDefinition {
+class JaxrsInterceptUrlMapFilterInvocationDefinition extends JaxrsFilterInvocationDefinition {
     /**
      * Logger.
      */
-    protected Logger log = Logger.getLogger(getClass())
+    protected Logger log = LoggerFactory.getLogger(JaxrsInterceptUrlMapFilterInvocationDefinition)
 
     /**
-     * Attempts to find a set of config attributes that matches a given URL.
-     *
-     * @param url
-     * @param requestMethod
-     * @return
-     * @throws Exception
+     * Initializes intercept rules.
      */
-    protected Collection<ConfigAttribute> findJaxrsConfigAttributes(final String url, final String requestMethod) throws Exception {
-        // Run init
-        initialize()
-
-        // Match markers
-        InterceptedUrl match
-
-        // Whether to stop when a first match is found
-        boolean stopAtFirstMatch = stopAtFirstMatch()
-
-        // Iterate through all known stored patterns
-        for (InterceptedUrl candidate : compiled) {
-            // Skip if the HTTP method doesn't match
-            if (candidate.getHttpMethod() != null && requestMethod != null && candidate.getHttpMethod() != HttpMethod.valueOf(requestMethod)) {
-                log.trace("Request '${requestMethod} ${url}' doesn't match '${candidate.httpMethod} ${candidate.pattern}'")
-                continue
-            }
-
-            // Check for a URL match
-            if (urlMatcher.match(candidate.getPattern(), url)) {
-                // Determine if the candidate is absolute
-                boolean isCandidateAbsolute = !candidate.pattern.contains('*')
-
-                // Determine if the match is absolute
-                boolean isMatchAbsolute = match == null ? false : !match.pattern.contains('*')
-
-                // Log the possible candidate
-                log.trace("possible candidate for '${url}': '${candidate.pattern}':${candidate.configAttributes}")
-
-                // If this is a first match or the pattern is identical, process it
-                if (!match || (isCandidateAbsolute && !isMatchAbsolute) || (!stopAtFirstMatch && isCandidateAbsolute == isMatchAbsolute)) {
-                    // Store the match
-                    match = candidate
-
-                    // Log it
-                    log.trace("new candidate for '${url}': '${candidate.pattern}':${candidate.configAttributes}")
-                }
-            }
+    @Override
+    void initialize() {
+        if (initialized) {
+            return
         }
 
-        // Log the result
-        if (!match) {
-            log.trace("no config for '${url}'")
-        }
-        else {
-            log.trace("config for '${url}' is '${match.pattern}':${match.configAttributes}")
+        Object map = ReflectionUtils.getConfigProperty("interceptUrlMap")
+        if (!(map instanceof Map || map instanceof List)) {
+            log.warn("interceptUrlMap config property isn't a Map or a List of Maps")
+            return
         }
 
-        return match?.configAttributes
+        resetConfigs()
+
+        ReflectionUtils.splitMap(map).each {
+            compileAndStoreMapping(it)
+        }
+
+        initialized = true
+    }
+
+    /**
+     * Always stop at first match.
+     *
+     * @return
+     */
+    @Override
+    protected boolean stopAtFirstMatch() {
+        return true
     }
 }

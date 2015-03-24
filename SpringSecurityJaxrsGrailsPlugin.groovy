@@ -15,6 +15,8 @@
  */
 
 import com.budjb.jaxrs.security.JaxrsAnnotationFilterInvocationDefinition
+import com.budjb.jaxrs.security.JaxrsInterceptUrlMapFilterInvocationDefinition
+import com.budjb.jaxrs.security.JaxrsRequestmapFilterInvocationDefinition
 import com.budjb.jaxrs.security.ObjectDefinitionSourceRegistry
 import grails.plugin.springsecurity.SpringSecurityUtils
 import org.apache.log4j.Logger
@@ -115,18 +117,13 @@ class SpringSecurityJaxrsGrailsPlugin {
         }
 
         // Get the configured security type
-        /*
         String securityConfigType = SpringSecurityUtils.securityConfigType
         if (!(securityConfigType in ['Annotation', 'Requestmap', 'InterceptUrlMap'])) {
             securityConfigType = 'Annotation'
         }
 
         if (securityConfigType == 'Annotation') {
-        */
             'jaxrsObjectDefinitionSource'(JaxrsAnnotationFilterInvocationDefinition) {
-                //application = ref('grailsApplication')
-                //grailsUrlConverter = ref('grailsUrlConverter')
-                //responseMimeTypesApi = ref('responseMimeTypesApi')
                 if (conf.rejectIfNoRule instanceof Boolean) {
                     rejectIfNoRule = conf.rejectIfNoRule
                 }
@@ -134,23 +131,27 @@ class SpringSecurityJaxrsGrailsPlugin {
                     allow404 = conf.jaxrs.allow404
                 }
             }
-        /*
         }
         else if (securityConfigType == 'Requestmap') {
-            objectDefinitionSource(JaxrsRequestmapFilterInvocationDefinition) {
+            'jaxrsObjectDefinitionSource'(JaxrsRequestmapFilterInvocationDefinition) {
                 if (conf.rejectIfNoRule instanceof Boolean) {
                     rejectIfNoRule = conf.rejectIfNoRule
+                }
+                if (conf.jaxrs.allow404 instanceof Boolean) {
+                    allow404 = conf.jaxrs.allow404
                 }
             }
         }
         else if (securityConfigType == 'InterceptUrlMap') {
-            objectDefinitionSource(JaxrsInterceptUrlMapFilterInvocationDefinition) {
+            'jaxrsObjectDefinitionSource'(JaxrsInterceptUrlMapFilterInvocationDefinition) {
                 if (conf.rejectIfNoRule instanceof Boolean) {
                     rejectIfNoRule = conf.rejectIfNoRule
                 }
+                if (conf.jaxrs.allow404 instanceof Boolean) {
+                    allow404 = conf.jaxrs.allow404
+                }
             }
         }
-        */
 
         // Make the security context repository stateless (disable sessions)
         //securityContextRepository(NullSecurityContextRepository)

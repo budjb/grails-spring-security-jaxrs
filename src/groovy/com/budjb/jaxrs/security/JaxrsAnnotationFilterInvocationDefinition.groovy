@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Bud Byrd
+ * Copyright 2014-2015 Bud Byrd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ import org.codehaus.groovy.grails.commons.GrailsClass
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpMethod
-import org.springframework.security.access.ConfigAttribute
-import org.springframework.security.access.SecurityConfig
 
 import javax.ws.rs.*
 import java.lang.annotation.Annotation
@@ -32,35 +30,6 @@ class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDef
      * Logger.
      */
     protected Logger log = LoggerFactory.getLogger(JaxrsAnnotationFilterInvocationDefinition)
-
-    /**
-     * List of known patterns in all JaxRS resources.
-     */
-    protected List<String> patterns = []
-
-    /**
-     * Whether to allow an HTTP 404 if a resource does not exist.
-     */
-    boolean allow404
-
-    /**
-     * Anonymous permission.
-     */
-    protected static final Collection<ConfigAttribute> ANONYMOUS
-    static {
-        Collection<ConfigAttribute> list = new ArrayList<ConfigAttribute>(1)
-        list.add(new SecurityConfig("IS_AUTHENTICATED_ANONYMOUSLY"))
-        ANONYMOUS = Collections.unmodifiableCollection(list)
-    }
-
-    /**
-     * Initializes patterns.
-     */
-    void initialize(GrailsClass[] resourceClasses) {
-        resourceClasses.each {
-            initializeResource(it)
-        }
-    }
 
     /**
      * Initializes patterns for a jaxrs resources and its patterns.
