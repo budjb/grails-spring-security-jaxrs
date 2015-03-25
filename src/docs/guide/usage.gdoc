@@ -1,0 +1,55 @@
+While instruction of how to use the Spring Security framework in Grails is best left to the
+[official documentation|http://grails-plugins.github.io/grails-spring-security-core/], this document will give a quick
+example of how annotation-based security can be added to a Jax-RS resource.
+
+{code}
+package com.budjb.example
+
+import grails.plugin.springsecurity.annotation.Secured
+
+import javax.ws.rs.GET
+import javax.ws.rs.Path
+import javax.ws.rs.Produces
+
+/**
+ * Index resource.
+ *
+ * Note that a @Secured annotation here defines the base security definition for every endpoint defined
+ * in the whole resource.  If an endpoint sets its own @Secured annotation, it overrides the one set at
+ * the class level.
+ */
+@Path("/api")
+@Secured(["ROLE_READONLY"])
+@Produces("text/plain")
+class IndexResource {
+    /**
+     * This endpoint requires a different role to access than the base one set on the class.
+     *
+     * If ROLE_READONLY is a less privileged role than ROLE_USER, this endpoint is a privileged one.
+     */
+    @GET
+    @Secured(["ROLE_USER"])
+    String index() {
+        return "Hello, authenticated user."
+    }
+
+    /**
+     * This endpoint will allow any user to access it, regardless of whether the client has authenticated or not.
+     */
+    @GET
+    @Path("/anonymous")
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    String anonymous() {
+        return "Hello, guest."
+    }
+
+    /**
+     * This endpoint will inherit the ROLE_READONLY requirement since it does not define its own @Secured annotation.
+     */
+    @GET
+    @Path("/inherit")
+    String inherit() {
+        return "Hello, read only user."
+    }
+}
+{code}

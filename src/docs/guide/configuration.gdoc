@@ -1,0 +1,22 @@
+While the plugin does not require any configuration to work out of the box, there are a few configuration options available that affect the plugin's behavior.
+
+The plugin's configuration properties live under the path:
+{code}
+grails.plugin.springsecurity.jaxrs
+{code}
+
+h2. @allow404@
+The @allow404@ property alters the behavior of the plugin when an endpoint that is not defined is accessed by a client.
+
+If the property is set to @true@, endpoints that do not exist will allow anonymous authentication. This allows the
+endpoint to return an @HTTP 404@ response to the client. If @false@, the normal Spring Security behavior is followed,
+which will redirect to a login page even if an endpoint is not defined.
+
+This property defaults to @true@.
+
+h2. @disableSessions@
+The @disableSessions@ property, if @true@, will disable session authentication storage in the plugin. This behavior is
+beneficial in applications that only provide APIs and do not have direct GUI interaction. If @false@, API clients may
+only need to authenticate once and their authentication will be cached in the application.
+
+This property defaults to @false@.
