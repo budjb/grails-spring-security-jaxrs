@@ -26,7 +26,7 @@ class SpringSecurityJaxrsGrailsPlugin {
     /**
      * Project version.
      */
-    def version = '0.5.8'
+    def version = '1.0.0'
 
     /**
      * Required grails version.
