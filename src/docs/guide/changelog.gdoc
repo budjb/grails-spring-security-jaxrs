@@ -1,0 +1,7 @@
+h3. Version 1.0.0
+* Initial public release.
+* Refactor the Jax-RS filter invocation definition classes so they do not extend the base Grails Spring Security\
+  version.
+
+h3. Version 0.5.7
+* Internal release.
