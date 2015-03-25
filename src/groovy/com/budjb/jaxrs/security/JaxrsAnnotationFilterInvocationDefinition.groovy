@@ -25,6 +25,10 @@ import javax.ws.rs.*
 import java.lang.annotation.Annotation
 import java.lang.reflect.Method
 
+/**
+ * Annotation-based object definition source.  Based on the Grails Spring Security version,
+ * but adapted for use with JaxRS resources.
+ */
 class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDefinition {
     /**
      * Logger.
@@ -52,7 +56,6 @@ class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDef
             HttpMethod httpMethod = getJaxrsHttpMethod(method)
 
             if (!httpMethod) {
-                log.trace("'${buildPattern(classPath, resourcePath)}' does not have an HTTP method")
                 return
             }
 
@@ -66,7 +69,6 @@ class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDef
             }
 
             if (resourceSecurity || classSecurity) {
-                log.trace("'$pattern' added to mapping")
                 storeMapping(pattern, httpMethod, ReflectionUtils.buildConfigAttributes(resourceSecurity ?: classSecurity))
             }
         }
@@ -105,12 +107,10 @@ class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDef
      * @return
      */
     protected Annotation findSecuredAnnotation(Annotation[] annotations) {
-        log.debug(annotations.toString())
         Annotation annotation = annotations.find {
             it.annotationType() == grails.plugin.springsecurity.annotation.Secured.class
         }
         if (annotation != null) {
-            log.debug('found grails @Secured annotation')
             return annotation
         }
 
@@ -118,7 +118,6 @@ class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDef
             it.annotationType() == org.springframework.security.access.annotation.Secured.class
         }
         if (annotation != null) {
-            log.debug('found spring security @Secured annotation')
             return annotation
         }
 

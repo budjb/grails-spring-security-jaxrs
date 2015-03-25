@@ -16,5 +16,3 @@ log4j = {
     debug 'com.budjb'
     trace 'com.budjb.jaxrs.security'
 }
-
-grails.plugin.springsecurity.jaxrs.allow404 = true

@@ -22,6 +22,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpMethod
 
+/**
+ * Request map object definition source.  Based on the Grails Spring Security version,
+ * but adapted for use with JaxRS resources.
+ */
 class JaxrsRequestmapFilterInvocationDefinition extends JaxrsFilterInvocationDefinition {
     /**
      * Logger.

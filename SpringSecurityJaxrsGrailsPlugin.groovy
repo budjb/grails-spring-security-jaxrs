@@ -87,6 +87,14 @@ class SpringSecurityJaxrsGrailsPlugin {
     def loadAfter = ['jaxrs', 'spring-security-core']
 
     /**
+     * Excluded files.
+     */
+    def pluginExcludes = [
+        'grails-app/controllers/**',
+        'grails-app/resources/**'
+    ]
+
+    /**
      * Logger.
      */
     Logger log = Logger.getLogger('com.budjb.jaxrs.security.SpringSecurityJaxrsGrailsPlugin')

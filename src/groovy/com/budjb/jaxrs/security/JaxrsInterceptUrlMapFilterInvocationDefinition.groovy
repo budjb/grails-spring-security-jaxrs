@@ -20,6 +20,10 @@ import org.codehaus.groovy.grails.commons.GrailsClass
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+/**
+ * Intercept URL object definition source.  Based on the Grails Spring Security version,
+ * but adapted for use with JaxRS resources.
+ */
 class JaxrsInterceptUrlMapFilterInvocationDefinition extends JaxrsFilterInvocationDefinition {
     /**
      * Logger.
