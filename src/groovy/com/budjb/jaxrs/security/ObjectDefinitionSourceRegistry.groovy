@@ -15,30 +15,23 @@
  */
 package com.budjb.jaxrs.security
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import org.springframework.security.access.ConfigAttribute
 import org.springframework.security.access.SecurityConfig
 import org.springframework.security.web.FilterInvocation
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource
 
+@CompileStatic
+@Slf4j
 class ObjectDefinitionSourceRegistry implements FilterInvocationSecurityMetadataSource {
-    /**
-     * Logger.
-     */
-    Logger log = LoggerFactory.getLogger(ObjectDefinitionSourceRegistry)
 
     /**
      * DENY config rule.
      *
      * This is brought over from {@see AbstractFilterInvocationDefintion}.
      */
-    protected static final Collection<ConfigAttribute> DENY
-    static {
-        Collection<ConfigAttribute> list = new ArrayList<ConfigAttribute>(1)
-        list.add(new SecurityConfig("_DENY_"))
-        DENY = Collections.unmodifiableCollection(list)
-    }
+    protected static final Collection<ConfigAttribute> DENY = Collections.singletonList((ConfigAttribute)new SecurityConfig("_DENY_"));
 
     /**
      * Whether to reject the request if no rule is found.
@@ -48,34 +41,18 @@ class ObjectDefinitionSourceRegistry implements FilterInvocationSecurityMetadata
     /**
      * Contains all registered object definition sources.
      */
-    List<FilterInvocationSecurityMetadataSource> sources
+    List<FilterInvocationSecurityMetadataSource> sources = []
 
-    /**
-     * Constructor
-     */
-    ObjectDefinitionSourceRegistry() {
-        sources = new LinkedList<FilterInvocationSecurityMetadataSource>()
-    }
-
-    /**
-     * Returns a list of rules for a given object.
-     *
-     * @param o
-     * @return
-     * @throws IllegalArgumentException
-     */
-    @Override
-    Collection<ConfigAttribute> getAttributes(Object o) throws IllegalArgumentException {
+    Collection<ConfigAttribute> getAttributes(o) {
         for (FilterInvocationSecurityMetadataSource source : sources) {
             log.debug('retrieving security attributes using object definition source {}', source.getClass().simpleName)
 
             Collection<ConfigAttribute> configAttributes = source.getAttributes(o)
-
-            if (configAttributes == null || configAttributes.isEmpty()) {
+            if (!configAttributes) {
                 continue
             }
 
-            if (configAttributes.size() == 1 && configAttributes[0].getAttribute() == '_DENY_') {
+            if (configAttributes.size() == 1 && configAttributes[0].attribute == '_DENY_') {
                 continue
             }
 
@@ -85,35 +62,18 @@ class ObjectDefinitionSourceRegistry implements FilterInvocationSecurityMetadata
         if (rejectIfNoRule) {
             return DENY
         }
-
-        return null
     }
 
-    /**
-     * Returns all config attributes.
-     *
-     * @return
-     */
-    @Override
     Collection<ConfigAttribute> getAllConfigAttributes() {
-        return sources.collect { it.getAllConfigAttributes() }
+        return sources.collect { it.allConfigAttributes }
     }
 
-    /**
-     * Class support.
-     *
-     * @param clazz
-     * @return
-     */
-    @Override
     boolean supports(Class<?> clazz) {
-        return FilterInvocation.class.isAssignableFrom(clazz)
+        return FilterInvocation.isAssignableFrom(clazz)
     }
 
     /**
      * Registers an object definition source.
-     *
-     * @param source
      */
     void register(FilterInvocationSecurityMetadataSource source) {
         log.debug('registering object definition source {}', source.getClass().simpleName)
@@ -122,11 +82,9 @@ class ObjectDefinitionSourceRegistry implements FilterInvocationSecurityMetadata
 
     /**
      * Un-registers an object definition source.
-     *
-     * @param source
      */
     void unregister(FilterInvocationSecurityMetadataSource source) {
         log.debug('un-registering object definition source {}', source.getClass().simpleName)
-        sources -= source
+        sources.remove source
     }
 }

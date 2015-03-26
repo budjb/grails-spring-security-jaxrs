@@ -17,32 +17,25 @@ package com.budjb.jaxrs.security
 
 import grails.plugin.springsecurity.InterceptedUrl
 import grails.plugin.springsecurity.web.access.intercept.AbstractFilterInvocationDefinition
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.grails.commons.GrailsClass
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpMethod
 import org.springframework.security.access.ConfigAttribute
 import org.springframework.security.access.SecurityConfig
 import org.springframework.security.web.FilterInvocation
 import org.springframework.util.Assert
 
+import java.lang.reflect.Method
+
 import javax.ws.rs.Path
 
+@CompileStatic
 class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition {
-    /**
-     * Logger.
-     */
-    Logger log = LoggerFactory.getLogger(JaxrsFilterInvocationDefinition)
 
     /**
      * Anonymous permission.
      */
-    protected static final Collection<ConfigAttribute> ANONYMOUS
-    static {
-        Collection<ConfigAttribute> list = new ArrayList<ConfigAttribute>(1)
-        list.add(new SecurityConfig("IS_AUTHENTICATED_ANONYMOUSLY"))
-        ANONYMOUS = Collections.unmodifiableCollection(list)
-    }
+    protected static final Collection<ConfigAttribute> ANONYMOUS = Collections.singletonList((ConfigAttribute)new SecurityConfig("IS_AUTHENTICATED_ANONYMOUSLY"))
 
     /**
      * List of all known path patterns in all JaxRS resources.
@@ -56,64 +49,43 @@ class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition
 
     /**
      * Initializes the object definition source.
-     *
-     * @param resourceClasses
      */
     void initialize(GrailsClass[] resourceClasses) {
         resetConfigs()
 
-        resourceClasses.each {
-            initializeResource(it)
-        }
+        resourceClasses.each { GrailsClass c -> initializeResource c }
     }
 
     /**
      * Initializes a JaxRS resource.
-     *
-     * @param clazz
      */
     protected void initializeResource(GrailsClass clazz) {
         Class<?> resource = clazz.clazz
 
         String classPath = resource.getAnnotation(Path)?.value() ?: ''
 
-        resource.declaredMethods.each { method ->
+        resource.declaredMethods.each { Method method ->
             patterns << buildPattern(classPath, method.getAnnotation(Path)?.value() ?: '')
         }
     }
 
     /**
      * Replace multiple slashes with one slash, and template path pieces with a .* regex.
-     *
-     * @param path
-     * @return
      */
     protected String buildPattern(String base, String resource) {
         return "${base ?: ''}/${resource ?: ''}".replaceAll(/\/+/, '/').replaceAll(/\{[^}]*\}/, '*').replaceAll(/\/$/, '')
     }
 
-    /**
-     * Returns attributes for a given request, if any exist.
-     */
-    Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
+    Collection<ConfigAttribute> getAttributes(object) {
         Assert.isTrue(object != null && supports(object.getClass()), "Object must be a FilterInvocation")
 
         FilterInvocation filterInvocation = (FilterInvocation) object
 
         String url = determineUrl(filterInvocation).replaceAll('/*$', '')
 
-        Collection<ConfigAttribute> configAttributes
-        try {
-            configAttributes = findConfigAttributes(url, filterInvocation.request.method)
-        }
-        catch (RuntimeException e) {
-            throw e
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e)
-        }
+        Collection<ConfigAttribute> configAttributes = findConfigAttributes(url, filterInvocation.request.method)
 
-        if ((configAttributes == null || configAttributes.isEmpty()) && rejectIfNoRule) {
+        if (!configAttributes && rejectIfNoRule) {
             if (allow404 && !patterns.find { urlMatcher.match(it, url) }) {
                 return ANONYMOUS
             }
@@ -123,16 +95,7 @@ class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition
         return configAttributes
     }
 
-    /**
-     * Attempts to find a set of config attributes that matches a given URL.
-     *
-     * @param url
-     * @param requestMethod
-     * @return
-     * @throws Exception
-     */
-    protected Collection<ConfigAttribute> findConfigAttributes(
-        final String url, final String requestMethod) throws Exception {
+    protected Collection<ConfigAttribute> findConfigAttributes(String url, String requestMethod) {
         initialize()
 
         InterceptedUrl match
@@ -140,12 +103,12 @@ class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition
         boolean stopAtFirstMatch = stopAtFirstMatch()
 
         compiled.each { candidate ->
-            if (candidate.getHttpMethod() != null && requestMethod != null && candidate.getHttpMethod() != HttpMethod.valueOf(requestMethod)) {
+            if (candidate.httpMethod && requestMethod && candidate.httpMethod != HttpMethod.valueOf(requestMethod)) {
                 log.trace("Request '{} {}' doesn't match '{} {}'", requestMethod, url, candidate.httpMethod, candidate.pattern)
                 return
             }
 
-            if (urlMatcher.match(candidate.getPattern(), url)) {
+            if (urlMatcher.match(candidate.pattern, url)) {
                 boolean isCandidateAbsolute = !candidate.pattern.contains('*')
 
                 log.trace("possible candidate for '{}': '{}':{}", url, candidate.pattern, candidate.configAttributes)

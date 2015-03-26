@@ -3,8 +3,7 @@ grails.project.class.dir = "target"
 grails.project.dependency.resolver = "maven"
 
 grails.project.dependency.resolution = {
-    inherits("global")
-
+    inherits "global"
     log "warn"
 
     repositories {
@@ -20,7 +19,7 @@ grails.project.dependency.resolution = {
 
     plugins {
         build(":release:3.0.1",
-              ":rest-client-builder:1.0.3",
+              ":rest-client-builder:2.0.3",
               ":tomcat:7.0.55") {
             export = false
         }

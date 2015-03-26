@@ -15,45 +15,42 @@
  */
 package com.budjb.jaxrs.security
 
+import grails.plugin.springsecurity.InterceptedUrl
 import grails.plugin.springsecurity.ReflectionUtils
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.grails.commons.GrailsClass
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 /**
  * Intercept URL object definition source.  Based on the Grails Spring Security version,
  * but adapted for use with JaxRS resources.
  */
+@CompileStatic
 class JaxrsInterceptUrlMapFilterInvocationDefinition extends JaxrsFilterInvocationDefinition {
-    /**
-     * Logger.
-     */
-    protected Logger log = LoggerFactory.getLogger(JaxrsInterceptUrlMapFilterInvocationDefinition)
 
-    /**
-     * Initializes intercept rules.
-     */
     @Override
     void initialize(GrailsClass[] resourceClasses) {
         super.initialize(resourceClasses)
 
-        Object map = ReflectionUtils.getConfigProperty("interceptUrlMap")
-        if (!(map instanceof Map || map instanceof List)) {
+        def map = ReflectionUtils.getConfigProperty("interceptUrlMap")
+        List<InterceptedUrl> urls
+        if (map instanceof Map) {
+            urls = ReflectionUtils.splitMap((Map)map)
+        }
+        else if (map instanceof List) {
+            urls = ReflectionUtils.splitMap((List)map)
+        }
+        else {
             log.warn("interceptUrlMap config property isn't a Map or a List of Maps")
             return
         }
 
         resetConfigs()
 
-        ReflectionUtils.splitMap(map).each {
-            compileAndStoreMapping(it)
-        }
+        urls.each { InterceptedUrl iu -> compileAndStoreMapping iu }
     }
 
     /**
      * Always stop at first match.
-     *
-     * @return
      */
     @Override
     protected boolean stopAtFirstMatch() {

@@ -1,6 +1,4 @@
-While instruction of how to use the Spring Security framework in Grails is best left to the
-[official documentation|http://grails-plugins.github.io/grails-spring-security-core/], this document will give a quick
-example of how annotation-based security can be added to a Jax-RS resource.
+While instruction of how to use the Spring Security framework in Grails is best left to the [official documentation|http://grails-plugins.github.io/grails-spring-security-core/], this document will give a quick example of how annotation-based security can be added to a Jax-RS resource.
 
 {code}
 package com.budjb.example

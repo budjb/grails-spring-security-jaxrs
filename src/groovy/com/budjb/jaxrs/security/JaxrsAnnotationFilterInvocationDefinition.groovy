@@ -16,12 +16,17 @@
 package com.budjb.jaxrs.security
 
 import grails.plugin.springsecurity.ReflectionUtils
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.codehaus.groovy.grails.commons.GrailsClass
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpMethod
 
-import javax.ws.rs.*
+import javax.ws.rs.DELETE
+import javax.ws.rs.GET
+import javax.ws.rs.HEAD
+import javax.ws.rs.POST
+import javax.ws.rs.PUT
+import javax.ws.rs.Path
 import java.lang.annotation.Annotation
 import java.lang.reflect.Method
 
@@ -29,32 +34,23 @@ import java.lang.reflect.Method
  * Annotation-based object definition source.  Based on the Grails Spring Security version,
  * but adapted for use with JaxRS resources.
  */
+@CompileStatic
 class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDefinition {
-    /**
-     * Logger.
-     */
-    protected Logger log = LoggerFactory.getLogger(JaxrsAnnotationFilterInvocationDefinition)
 
     /**
      * Initializes patterns for a jaxrs resources and its patterns.
-     *
-     * @param clazz
      */
     protected void initializeResource(GrailsClass clazz) {
         Class resource = clazz.clazz
 
         String classPath = resource.getAnnotation(Path)?.value()
 
-        Collection<String> classSecurity = null
-        if (findSecuredAnnotation(resource.annotations)) {
-            classSecurity = getValue(findSecuredAnnotation(resource.annotations))
-        }
+        Collection<String> classSecurity = getAnnotationValues(resource.annotations)
 
-        resource.declaredMethods.each { method ->
+        resource.declaredMethods.each { Method method ->
             String resourcePath = method.getAnnotation(Path)?.value() ?: ''
 
             HttpMethod httpMethod = getJaxrsHttpMethod(method)
-
             if (!httpMethod) {
                 return
             }
@@ -63,10 +59,7 @@ class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDef
 
             patterns << pattern
 
-            Collection<String> resourceSecurity = null
-            if (findSecuredAnnotation(method.annotations)) {
-                resourceSecurity = getValue(findSecuredAnnotation(method.annotations))
-            }
+            Collection<String> resourceSecurity = getAnnotationValues(method.annotations)
 
             if (resourceSecurity || classSecurity) {
                 storeMapping(pattern, httpMethod, ReflectionUtils.buildConfigAttributes(resourceSecurity ?: classSecurity))
@@ -74,11 +67,14 @@ class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDef
         }
     }
 
+    @CompileStatic(TypeCheckingMode.SKIP)
+    protected Collection<String> getAnnotationValues(Annotation[] annotations) {
+        Annotation a = findSecuredAnnotation(annotations)
+        if (a) getValue a
+    }
+
     /**
      * Returns the HTTP method of a given method.
-     *
-     * @param method
-     * @return
      */
     protected HttpMethod getJaxrsHttpMethod(Method method) {
         if (method.getAnnotation(GET)) {
@@ -96,51 +92,35 @@ class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDef
         if (method.getAnnotation(HEAD)) {
             return HttpMethod.HEAD
         }
-
-        return null
     }
 
     /**
      * Find an appropriate @Secured annotation give a list of annotations.
-     *
-     * @param annotations
-     * @return
      */
     protected Annotation findSecuredAnnotation(Annotation[] annotations) {
         Annotation annotation = annotations.find {
             it.annotationType() == grails.plugin.springsecurity.annotation.Secured.class
         }
-        if (annotation != null) {
+        if (annotation) {
             return annotation
         }
 
-        annotation = annotations.find {
+        return annotations.find {
             it.annotationType() == org.springframework.security.access.annotation.Secured.class
         }
-        if (annotation != null) {
-            return annotation
-        }
-
-        return null
     }
 
     /**
      * Returns the value of a @Secured annotation.
-     *
-     * @param annotation
-     * @return
      */
     protected Collection<String> getValue(grails.plugin.springsecurity.annotation.Secured annotation) {
-        return new LinkedHashSet<String>(Arrays.asList(annotation.value()))
+        return Arrays.asList(annotation.value()) as Set
     }
 
     /**
      * Returns the value of a @Secured annotation.
-     *
-     * @param annotation
-     * @return
      */
     protected Collection<String> getValue(org.springframework.security.access.annotation.Secured annotation) {
-        return new LinkedHashSet<String>(Arrays.asList(annotation.value()))
+        return Arrays.asList(annotation.value()) as Set
     }
 }
