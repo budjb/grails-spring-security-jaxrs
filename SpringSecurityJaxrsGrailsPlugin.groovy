@@ -18,7 +18,9 @@ import com.budjb.jaxrs.security.JaxrsInterceptUrlMapFilterInvocationDefinition
 import com.budjb.jaxrs.security.JaxrsRequestmapFilterInvocationDefinition
 import com.budjb.jaxrs.security.ObjectDefinitionSourceRegistry
 import grails.plugin.springsecurity.SpringSecurityUtils
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor
 import org.springframework.security.web.context.NullSecurityContextRepository
 
@@ -51,7 +53,7 @@ class SpringSecurityJaxrsGrailsPlugin {
     /**
      * Plugin description.
      */
-    def description = 'Enables spring security support for the jax-rs plugin.'
+    def description = 'Enables Spring Security support for the JAX-RS plugin.'
 
     /**
      * Link to documentation.
@@ -66,7 +68,7 @@ class SpringSecurityJaxrsGrailsPlugin {
     /**
      * Issue tracker.
      */
-    def issueManagement = [system: 'GITHUB', url: 'https://github.com/budjb/grails-jaxrs-secured/issues']
+    def issueManagement = [url: 'https://github.com/budjb/grails-jaxrs-secured/issues']
 
     /**
      * SCM.
@@ -97,7 +99,7 @@ class SpringSecurityJaxrsGrailsPlugin {
     /**
      * Logger.
      */
-    Logger log = Logger.getLogger('com.budjb.jaxrs.security.SpringSecurityJaxrsGrailsPlugin')
+    Logger log = LoggerFactory.getLogger('com.budjb.jaxrs.security.SpringSecurityJaxrsGrailsPlugin')
 
     def doWithSpring = {
         def conf = SpringSecurityUtils.securityConfig
@@ -108,14 +110,13 @@ class SpringSecurityJaxrsGrailsPlugin {
         SpringSecurityUtils.loadSecondaryConfig 'DefaultJaxrsSecurityConfig'
         conf = SpringSecurityUtils.securityConfig
 
-
-        'objectDefinitionRegistry'(ObjectDefinitionSourceRegistry) { bean ->
+        objectDefinitionRegistry(ObjectDefinitionSourceRegistry) {
             if (conf.rejectIfNoRule instanceof Boolean) {
                 rejectIfNoRule = conf.rejectIfNoRule
             }
         }
 
-        'filterInvocationInterceptor'(FilterSecurityInterceptor) {
+        filterInvocationInterceptor(FilterSecurityInterceptor) {
             authenticationManager = ref('authenticationManager')
             accessDecisionManager = ref('accessDecisionManager')
             securityMetadataSource = ref('objectDefinitionRegistry')
@@ -128,40 +129,18 @@ class SpringSecurityJaxrsGrailsPlugin {
             observeOncePerRequest = conf.fii.observeOncePerRequest // true
         }
 
-        // Get the configured security type
-        String securityConfigType = SpringSecurityUtils.securityConfigType
-        if (!(securityConfigType in ['Annotation', 'Requestmap', 'InterceptUrlMap'])) {
-            securityConfigType = 'Annotation'
-        }
+        Class filterInvocationDefinitionClass = (SpringSecurityUtils.securityConfigType == 'Requestmap') ?
+            JaxrsRequestmapFilterInvocationDefinition :
+            (SpringSecurityUtils.securityConfigType == 'InterceptUrlMap') ?
+            JaxrsInterceptUrlMapFilterInvocationDefinition :
+            JaxrsAnnotationFilterInvocationDefinition
 
-        if (securityConfigType == 'Annotation') {
-            'jaxrsObjectDefinitionSource'(JaxrsAnnotationFilterInvocationDefinition) {
-                if (conf.rejectIfNoRule instanceof Boolean) {
-                    rejectIfNoRule = conf.rejectIfNoRule
-                }
-                if (conf.jaxrs.allow404 instanceof Boolean) {
-                    allow404 = conf.jaxrs.allow404
-                }
+        jaxrsObjectDefinitionSource(filterInvocationDefinitionClass) {
+            if (conf.rejectIfNoRule instanceof Boolean) {
+                rejectIfNoRule = conf.rejectIfNoRule
             }
-        }
-        else if (securityConfigType == 'Requestmap') {
-            'jaxrsObjectDefinitionSource'(JaxrsRequestmapFilterInvocationDefinition) {
-                if (conf.rejectIfNoRule instanceof Boolean) {
-                    rejectIfNoRule = conf.rejectIfNoRule
-                }
-                if (conf.jaxrs.allow404 instanceof Boolean) {
-                    allow404 = conf.jaxrs.allow404
-                }
-            }
-        }
-        else if (securityConfigType == 'InterceptUrlMap') {
-            'jaxrsObjectDefinitionSource'(JaxrsInterceptUrlMapFilterInvocationDefinition) {
-                if (conf.rejectIfNoRule instanceof Boolean) {
-                    rejectIfNoRule = conf.rejectIfNoRule
-                }
-                if (conf.jaxrs.allow404 instanceof Boolean) {
-                    allow404 = conf.jaxrs.allow404
-                }
+            if (conf.jaxrs.allow404 instanceof Boolean) {
+                allow404 = conf.jaxrs.allow404
             }
         }
 
@@ -189,7 +168,7 @@ class SpringSecurityJaxrsGrailsPlugin {
         }
 
         for (resourceClass in application.resourceClasses) {
-            addControllerMethods resourceClass.metaClass, ctx
+            addResourceMethods resourceClass.metaClass, ctx
         }
     }
 
@@ -202,7 +181,7 @@ class SpringSecurityJaxrsGrailsPlugin {
         if (event.source && application.isResourceClass(event.source)) {
             event.ctx.jaxrsObjectDefinitionSource.initialize(application.resourceClasses)
 
-            addControllerMethods application.getResourceClass(event.source.name).metaClass, event.ctx
+            addResourceMethods application.getResourceClass(event.source.name).metaClass, event.ctx
         }
     }
 
@@ -217,7 +196,7 @@ class SpringSecurityJaxrsGrailsPlugin {
         event.ctx.jaxrsObjectDefinitionSource.initialize(application.resourceClasses)
     }
 
-    private void addControllerMethods(MetaClass mc, ctx) {
+    private void addResourceMethods(MetaClass mc, ctx) {
         if (!mc.respondsTo(null, 'getPrincipal')) {
             mc.getPrincipal = { -> SCH.context?.authentication?.principal }
         }
