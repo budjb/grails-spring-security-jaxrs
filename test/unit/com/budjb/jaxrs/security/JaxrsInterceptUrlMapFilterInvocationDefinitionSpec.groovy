@@ -7,20 +7,37 @@ import org.codehaus.groovy.grails.commons.GrailsClass
 import org.springframework.security.access.ConfigAttribute
 import spock.lang.Unroll
 
-class JaxrsAnnotationFilterInvocationDefinitionSpec extends JaxrsFilterInvocationTest {
-    JaxrsAnnotationFilterInvocationDefinition jaxrsAnnotationFilterInvocationDefinition
+class JaxrsInterceptUrlMapFilterInvocationDefinitionSpec extends JaxrsFilterInvocationTest {
+    JaxrsInterceptUrlMapFilterInvocationDefinition jaxrsInterceptUrlMapFilterInvocationDefinition
 
     def setup() {
+        grailsApplication.getConfig() >> new ConfigObject([
+            grails: [
+                plugin : [
+                    springsecurity: [
+                        interceptUrlMap: [
+                            '/api/class_security'             : ['ROLE_USER'],
+                            '/api/class_security/anonymous'   : ['IS_AUTHENTICATED_ANONYMOUSLY'],
+                            '/api/class_security/**'          : ['ROLE_READONLY'],
+
+                            '/api/resource_security'          : ['ROLE_USER'],
+                            '/api/resource_security/anonymous': ['IS_AUTHENTICATED_ANONYMOUSLY']
+                        ]
+                    ]
+                ],
+                plugins: [:]
+            ]
+        ])
         GrailsClass classSecurityResourceGrailsClass = Mock(GrailsClass)
         classSecurityResourceGrailsClass.getClazz() >> ClassSecurityResource
 
         GrailsClass resourceSecurityResourceGrailsClass = Mock(GrailsClass)
         resourceSecurityResourceGrailsClass.getClazz() >> ResourceSecurityResource
 
-        jaxrsAnnotationFilterInvocationDefinition = new JaxrsAnnotationFilterInvocationDefinition()
-        jaxrsAnnotationFilterInvocationDefinition.rejectIfNoRule = true
-        jaxrsAnnotationFilterInvocationDefinition.allow404 = true
-        jaxrsAnnotationFilterInvocationDefinition.initialize([classSecurityResourceGrailsClass, resourceSecurityResourceGrailsClass] as GrailsClass[])
+        jaxrsInterceptUrlMapFilterInvocationDefinition = new JaxrsInterceptUrlMapFilterInvocationDefinition()
+        jaxrsInterceptUrlMapFilterInvocationDefinition.rejectIfNoRule = true
+        jaxrsInterceptUrlMapFilterInvocationDefinition.allow404 = true
+        jaxrsInterceptUrlMapFilterInvocationDefinition.initialize([classSecurityResourceGrailsClass, resourceSecurityResourceGrailsClass] as GrailsClass[])
     }
 
     @Unroll
@@ -31,7 +48,7 @@ class JaxrsAnnotationFilterInvocationDefinitionSpec extends JaxrsFilterInvocatio
         httpServletRequest.getMethod() >> method
 
         when:
-        Collection<ConfigAttribute> results = jaxrsAnnotationFilterInvocationDefinition.getAttributes(filterInvocation)
+        Collection<ConfigAttribute> results = jaxrsInterceptUrlMapFilterInvocationDefinition.getAttributes(filterInvocation)
 
         then:
         if (result == null) {
@@ -57,7 +74,7 @@ class JaxrsAnnotationFilterInvocationDefinitionSpec extends JaxrsFilterInvocatio
         httpServletRequest.getMethod() >> method
 
         when:
-        Collection<ConfigAttribute> results = jaxrsAnnotationFilterInvocationDefinition.getAttributes(filterInvocation)
+        Collection<ConfigAttribute> results = jaxrsInterceptUrlMapFilterInvocationDefinition.getAttributes(filterInvocation)
 
         then:
         if (result == null) {
@@ -82,11 +99,11 @@ class JaxrsAnnotationFilterInvocationDefinitionSpec extends JaxrsFilterInvocatio
         httpServletRequest.getContextPath() >> 'https://example.com'
         httpServletRequest.getMethod() >> 'GET'
 
-        jaxrsAnnotationFilterInvocationDefinition.rejectIfNoRule = rejectIfNoRule
-        jaxrsAnnotationFilterInvocationDefinition.allow404 = allow404
+        jaxrsInterceptUrlMapFilterInvocationDefinition.rejectIfNoRule = rejectIfNoRule
+        jaxrsInterceptUrlMapFilterInvocationDefinition.allow404 = allow404
 
         when:
-        Collection<ConfigAttribute> results = jaxrsAnnotationFilterInvocationDefinition.getAttributes(filterInvocation)
+        Collection<ConfigAttribute> results = jaxrsInterceptUrlMapFilterInvocationDefinition.getAttributes(filterInvocation)
 
         then:
         if (rule == null) {
@@ -98,10 +115,10 @@ class JaxrsAnnotationFilterInvocationDefinitionSpec extends JaxrsFilterInvocatio
         }
 
         where:
-        rejectIfNoRule  | allow404  || rule
-        false           | false     || null
-        true            | false     || '_DENY_'
-        false           | true      || null
-        true            | true      || 'IS_AUTHENTICATED_ANONYMOUSLY'
+        rejectIfNoRule | allow404 || rule
+        false          | false    || null
+        true           | false    || '_DENY_'
+        false          | true     || null
+        true           | true     || 'IS_AUTHENTICATED_ANONYMOUSLY'
     }
 }
