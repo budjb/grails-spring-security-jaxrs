@@ -27,7 +27,7 @@ import org.springframework.util.Assert
 import javax.ws.rs.Path
 import java.lang.reflect.Method
 
-class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition {
+abstract class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition {
     /**
      * Anonymous permission.
      */
