@@ -24,25 +24,19 @@ import org.codehaus.groovy.grails.commons.GrailsClass
  * Intercept URL object definition source.  Based on the Grails Spring Security version,
  * but adapted for use with JaxRS resources.
  */
-@CompileStatic
 class JaxrsInterceptUrlMapFilterInvocationDefinition extends JaxrsFilterInvocationDefinition {
-
     @Override
     void initialize(GrailsClass[] resourceClasses) {
         super.initialize(resourceClasses)
 
         def map = ReflectionUtils.getConfigProperty("interceptUrlMap")
-        List<InterceptedUrl> urls
-        if (map instanceof Map) {
-            urls = ReflectionUtils.splitMap((Map)map)
-        }
-        else if (map instanceof List) {
-            urls = ReflectionUtils.splitMap((List)map)
-        }
-        else {
+
+        if (!(map instanceof Map || map instanceof List)) {
             log.warn("interceptUrlMap config property isn't a Map or a List of Maps")
             return
         }
+
+        List<InterceptedUrl> urls = ReflectionUtils.splitMap(map)
 
         resetConfigs()
 

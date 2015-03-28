@@ -25,13 +25,12 @@ import org.springframework.security.web.access.intercept.FilterInvocationSecurit
 @CompileStatic
 @Slf4j
 class ObjectDefinitionSourceRegistry implements FilterInvocationSecurityMetadataSource {
-
     /**
      * DENY config rule.
      *
      * This is brought over from {@see AbstractFilterInvocationDefintion}.
      */
-    protected static final Collection<ConfigAttribute> DENY = Collections.singletonList((ConfigAttribute)new SecurityConfig("_DENY_"));
+    protected static final Collection<ConfigAttribute> DENY = Collections.singletonList((ConfigAttribute) new SecurityConfig("_DENY_"))
 
     /**
      * Whether to reject the request if no rule is found.
@@ -65,7 +64,7 @@ class ObjectDefinitionSourceRegistry implements FilterInvocationSecurityMetadata
     }
 
     Collection<ConfigAttribute> getAllConfigAttributes() {
-        return sources.collect { it.allConfigAttributes }
+        return sources.collect { it.allConfigAttributes }.flatten()
     }
 
     boolean supports(Class<?> clazz) {

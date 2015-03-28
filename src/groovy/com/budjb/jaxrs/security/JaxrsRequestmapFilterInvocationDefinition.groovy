@@ -27,7 +27,6 @@ import org.springframework.http.HttpMethod
  */
 @CompileStatic
 class JaxrsRequestmapFilterInvocationDefinition extends JaxrsFilterInvocationDefinition {
-
     @Override
     void initialize(GrailsClass[] resourceClasses) {
         super.initialize(resourceClasses)

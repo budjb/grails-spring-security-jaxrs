@@ -11,6 +11,7 @@
 /cobertura.ser
 /grails-spring-security-jaxrs-*.zip
 /grails-spring-security-jaxrs-*.zip.sha1
+/out
 /plugin.xml
 /target
 /target-eclipse

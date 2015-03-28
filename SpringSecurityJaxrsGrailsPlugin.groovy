@@ -93,7 +93,9 @@ class SpringSecurityJaxrsGrailsPlugin {
      */
     def pluginExcludes = [
         'grails-app/controllers/**',
-        'grails-app/resources/**'
+        'grails-app/resources/**',
+        'src/groovy/com/budjb/jaxrs/security/test/**',
+        'src/docs/**'
     ]
 
     /**
@@ -129,11 +131,19 @@ class SpringSecurityJaxrsGrailsPlugin {
             observeOncePerRequest = conf.fii.observeOncePerRequest // true
         }
 
-        Class filterInvocationDefinitionClass = (SpringSecurityUtils.securityConfigType == 'Requestmap') ?
-            JaxrsRequestmapFilterInvocationDefinition :
-            (SpringSecurityUtils.securityConfigType == 'InterceptUrlMap') ?
-            JaxrsInterceptUrlMapFilterInvocationDefinition :
-            JaxrsAnnotationFilterInvocationDefinition
+        Class filterInvocationDefinitionClass
+        switch (SpringSecurityUtils.securityConfigType) {
+            case 'Requestmap':
+                filterInvocationDefinitionClass = JaxrsRequestmapFilterInvocationDefinition
+                break
+
+            case 'InterceptUrlMap':
+                filterInvocationDefinitionClass = JaxrsInterceptUrlMapFilterInvocationDefinition
+                break
+
+            default:
+                filterInvocationDefinitionClass = JaxrsAnnotationFilterInvocationDefinition
+        }
 
         jaxrsObjectDefinitionSource(filterInvocationDefinitionClass) {
             if (conf.rejectIfNoRule instanceof Boolean) {

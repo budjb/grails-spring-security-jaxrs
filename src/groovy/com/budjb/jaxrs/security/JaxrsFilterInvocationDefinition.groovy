@@ -19,23 +19,28 @@ import grails.plugin.springsecurity.InterceptedUrl
 import grails.plugin.springsecurity.web.access.intercept.AbstractFilterInvocationDefinition
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.grails.commons.GrailsClass
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpMethod
 import org.springframework.security.access.ConfigAttribute
 import org.springframework.security.access.SecurityConfig
 import org.springframework.security.web.FilterInvocation
 import org.springframework.util.Assert
 
-import java.lang.reflect.Method
-
 import javax.ws.rs.Path
+import java.lang.reflect.Method
 
 @CompileStatic
 class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition {
+    /**
+     * Logger.
+     */
+    Logger log = LoggerFactory.getLogger(getClass())
 
     /**
      * Anonymous permission.
      */
-    protected static final Collection<ConfigAttribute> ANONYMOUS = Collections.singletonList((ConfigAttribute)new SecurityConfig("IS_AUTHENTICATED_ANONYMOUSLY"))
+    protected static final Collection<ConfigAttribute> ANONYMOUS = Collections.singletonList((ConfigAttribute) new SecurityConfig("IS_AUTHENTICATED_ANONYMOUSLY"))
 
     /**
      * List of all known path patterns in all JaxRS resources.
@@ -83,7 +88,7 @@ class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition
 
         String url = determineUrl(filterInvocation).replaceAll('/*$', '')
 
-        Collection<ConfigAttribute> configAttributes = findConfigAttributes(url, filterInvocation.request.method)
+        Collection<ConfigAttribute> configAttributes = findConfigAttributes(url, filterInvocation.httpRequest.method)
 
         if (!configAttributes && rejectIfNoRule) {
             if (allow404 && !patterns.find { urlMatcher.match(it, url) }) {
@@ -105,7 +110,7 @@ class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition
         compiled.each { candidate ->
             if (candidate.httpMethod && requestMethod && candidate.httpMethod != HttpMethod.valueOf(requestMethod)) {
                 log.trace("Request '{} {}' doesn't match '{} {}'", requestMethod, url, candidate.httpMethod, candidate.pattern)
-                return
+                return null
             }
 
             if (urlMatcher.match(candidate.pattern, url)) {

@@ -21,12 +21,7 @@ import groovy.transform.TypeCheckingMode
 import org.codehaus.groovy.grails.commons.GrailsClass
 import org.springframework.http.HttpMethod
 
-import javax.ws.rs.DELETE
-import javax.ws.rs.GET
-import javax.ws.rs.HEAD
-import javax.ws.rs.POST
-import javax.ws.rs.PUT
-import javax.ws.rs.Path
+import javax.ws.rs.*
 import java.lang.annotation.Annotation
 import java.lang.reflect.Method
 
@@ -36,7 +31,6 @@ import java.lang.reflect.Method
  */
 @CompileStatic
 class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDefinition {
-
     /**
      * Initializes patterns for a jaxrs resources and its patterns.
      */
@@ -69,8 +63,12 @@ class JaxrsAnnotationFilterInvocationDefinition extends JaxrsFilterInvocationDef
 
     @CompileStatic(TypeCheckingMode.SKIP)
     protected Collection<String> getAnnotationValues(Annotation[] annotations) {
-        Annotation a = findSecuredAnnotation(annotations)
-        if (a) getValue a
+        Annotation annotation = findSecuredAnnotation(annotations)
+        if (annotation) {
+            return getValue(annotation)
+        }
+
+        return null
     }
 
     /**
