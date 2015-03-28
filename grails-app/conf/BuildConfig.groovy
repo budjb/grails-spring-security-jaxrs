@@ -14,13 +14,13 @@ grails.project.dependency.resolution = {
     }
 
     dependencies {
-        runtime 'net.sf.ehcache:ehcache:2.9.1'
+        runtime('net.sf.ehcache:ehcache:2.9.1') {
+            export = false
+        }
     }
 
     plugins {
-        build(":release:3.0.1",
-              ":rest-client-builder:2.0.3",
-              ":tomcat:7.0.55") {
+        build(":release:3.0.1", ":rest-client-builder:2.0.3") {
             export = false
         }
 

@@ -98,11 +98,6 @@ class SpringSecurityJaxrsGrailsPlugin {
         'src/docs/**'
     ]
 
-    /**
-     * Logger.
-     */
-    Logger log = LoggerFactory.getLogger('com.budjb.jaxrs.security.SpringSecurityJaxrsGrailsPlugin')
-
     def doWithSpring = {
         def conf = SpringSecurityUtils.securityConfig
         if (!conf || !conf.active) {
