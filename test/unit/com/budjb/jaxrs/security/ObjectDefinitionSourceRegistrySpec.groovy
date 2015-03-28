@@ -1,13 +1,8 @@
 package com.budjb.jaxrs.security
 
 import com.budjb.jaxrs.security.test.JaxrsFilterInvocationTest
-import grails.plugin.springsecurity.InterceptedUrl
 import grails.plugin.springsecurity.web.access.intercept.AbstractFilterInvocationDefinition
 import org.springframework.security.access.ConfigAttribute
-import org.springframework.security.web.FilterInvocation
-import spock.lang.Specification
-
-import javax.servlet.http.HttpServletRequest
 
 class ObjectDefinitionSourceRegistrySpec extends JaxrsFilterInvocationTest {
     ObjectDefinitionSourceRegistry objectDefinitionSourceRegistry
