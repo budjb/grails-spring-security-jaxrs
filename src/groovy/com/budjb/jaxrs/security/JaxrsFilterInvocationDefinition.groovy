@@ -17,10 +17,7 @@ package com.budjb.jaxrs.security
 
 import grails.plugin.springsecurity.InterceptedUrl
 import grails.plugin.springsecurity.web.access.intercept.AbstractFilterInvocationDefinition
-import groovy.transform.CompileStatic
 import org.codehaus.groovy.grails.commons.GrailsClass
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpMethod
 import org.springframework.security.access.ConfigAttribute
 import org.springframework.security.access.SecurityConfig
@@ -30,13 +27,7 @@ import org.springframework.util.Assert
 import javax.ws.rs.Path
 import java.lang.reflect.Method
 
-@CompileStatic
 class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition {
-    /**
-     * Logger.
-     */
-    Logger log = LoggerFactory.getLogger(getClass())
-
     /**
      * Anonymous permission.
      */
@@ -107,31 +98,31 @@ class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationDefinition
         boolean isMatchAbsolute
         boolean stopAtFirstMatch = stopAtFirstMatch()
 
-        compiled.each { candidate ->
+        for (InterceptedUrl candidate : compiled) {
             if (candidate.httpMethod && requestMethod && candidate.httpMethod != HttpMethod.valueOf(requestMethod)) {
-                log.trace("Request '{} {}' doesn't match '{} {}'", requestMethod, url, candidate.httpMethod, candidate.pattern)
+                log.trace("Request '${requestMethod} ${url}' doesn't match '${candidate.httpMethod} ${candidate.pattern}'")
                 return null
             }
 
             if (urlMatcher.match(candidate.pattern, url)) {
                 boolean isCandidateAbsolute = !candidate.pattern.contains('*')
 
-                log.trace("possible candidate for '{}': '{}':{}", url, candidate.pattern, candidate.configAttributes)
+                log.trace("possible candidate for '${url}': '${candidate.pattern}':${candidate.configAttributes}")
 
                 if (!match || (isCandidateAbsolute && !isMatchAbsolute) || (!stopAtFirstMatch && isCandidateAbsolute == isMatchAbsolute)) {
                     match = candidate
                     isMatchAbsolute = !match.pattern.contains('*')
-                    log.trace("new candidate for '{}': '{}':{}", url, candidate.pattern, candidate.configAttributes)
+                    log.trace("new candidate for '${url}': '${candidate.pattern}':${candidate.configAttributes}")
                 }
             }
         }
 
         if (!match) {
-            log.trace("no config for '{}'", url)
+            log.trace("no config for '${url}'")
             return null
         }
 
-        log.trace("config for '{}' is '{}':{}", url, match.pattern, match.configAttributes)
+        log.trace("config for '${url}' is '${match.pattern}':${match.configAttributes}")
         return match.configAttributes
     }
 }

@@ -15,7 +15,7 @@
  */
 import com.budjb.jaxrs.security.JaxrsAnnotationFilterInvocationDefinition
 import com.budjb.jaxrs.security.JaxrsInterceptUrlMapFilterInvocationDefinition
-import com.budjb.jaxrs.security.JaxrsRequestmapFilterInvocationDefinition
+import com.budjb.jaxrs.security.JaxrsRequestMapFilterInvocationDefinition
 import com.budjb.jaxrs.security.ObjectDefinitionSourceRegistry
 import grails.plugin.springsecurity.SpringSecurityUtils
 import org.slf4j.Logger
@@ -134,7 +134,7 @@ class SpringSecurityJaxrsGrailsPlugin {
         Class filterInvocationDefinitionClass
         switch (SpringSecurityUtils.securityConfigType) {
             case 'Requestmap':
-                filterInvocationDefinitionClass = JaxrsRequestmapFilterInvocationDefinition
+                filterInvocationDefinitionClass = JaxrsRequestMapFilterInvocationDefinition
                 break
 
             case 'InterceptUrlMap':

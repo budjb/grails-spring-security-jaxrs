@@ -1,8 +1,6 @@
 package com.budjb.jaxrs.security
 
 import com.budjb.jaxrs.security.test.JaxrsFilterInvocationTest
-import com.budjb.jaxrs.test.ClassSecurityResource
-import com.budjb.jaxrs.test.ResourceSecurityResource
 import org.codehaus.groovy.grails.commons.GrailsClass
 import org.springframework.security.access.ConfigAttribute
 import spock.lang.Unroll
@@ -28,11 +26,6 @@ class JaxrsInterceptUrlMapFilterInvocationDefinitionSpec extends JaxrsFilterInvo
                 plugins: [:]
             ]
         ])
-        GrailsClass classSecurityResourceGrailsClass = Mock(GrailsClass)
-        classSecurityResourceGrailsClass.getClazz() >> ClassSecurityResource
-
-        GrailsClass resourceSecurityResourceGrailsClass = Mock(GrailsClass)
-        resourceSecurityResourceGrailsClass.getClazz() >> ResourceSecurityResource
 
         jaxrsInterceptUrlMapFilterInvocationDefinition = new JaxrsInterceptUrlMapFilterInvocationDefinition()
         jaxrsInterceptUrlMapFilterInvocationDefinition.rejectIfNoRule = true

@@ -17,7 +17,6 @@ package com.budjb.jaxrs.security
 
 import grails.plugin.springsecurity.InterceptedUrl
 import grails.plugin.springsecurity.ReflectionUtils
-import groovy.transform.CompileStatic
 import org.codehaus.groovy.grails.commons.GrailsClass
 
 /**

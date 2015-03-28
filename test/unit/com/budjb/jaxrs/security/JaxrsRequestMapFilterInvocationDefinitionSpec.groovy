@@ -1,18 +1,19 @@
 package com.budjb.jaxrs.security
 
 import com.budjb.jaxrs.security.test.JaxrsFilterInvocationTest
+import grails.plugin.springsecurity.InterceptedUrl
 import org.codehaus.groovy.grails.commons.GrailsClass
 import org.springframework.security.access.ConfigAttribute
 import spock.lang.Unroll
 
-class JaxrsAnnotationFilterInvocationDefinitionSpec extends JaxrsFilterInvocationTest {
-    JaxrsAnnotationFilterInvocationDefinition jaxrsAnnotationFilterInvocationDefinition
+class JaxrsRequestMapFilterInvocationDefinitionSpec extends JaxrsFilterInvocationTest {
+    JaxrsRequestMapFilterInvocationDefinition jaxrsRequestMapFilterInvocationDefinition
 
     def setup() {
-        jaxrsAnnotationFilterInvocationDefinition = new JaxrsAnnotationFilterInvocationDefinition()
-        jaxrsAnnotationFilterInvocationDefinition.rejectIfNoRule = true
-        jaxrsAnnotationFilterInvocationDefinition.allow404 = true
-        jaxrsAnnotationFilterInvocationDefinition.initialize([classSecurityResourceGrailsClass, resourceSecurityResourceGrailsClass] as GrailsClass[])
+        jaxrsRequestMapFilterInvocationDefinition = new TestRequestMapFilterInvocationDefinition()
+        jaxrsRequestMapFilterInvocationDefinition.rejectIfNoRule = true
+        jaxrsRequestMapFilterInvocationDefinition.allow404 = true
+        jaxrsRequestMapFilterInvocationDefinition.initialize([classSecurityResourceGrailsClass, resourceSecurityResourceGrailsClass] as GrailsClass[])
     }
 
     @Unroll
@@ -23,7 +24,7 @@ class JaxrsAnnotationFilterInvocationDefinitionSpec extends JaxrsFilterInvocatio
         httpServletRequest.getMethod() >> method
 
         when:
-        Collection<ConfigAttribute> results = jaxrsAnnotationFilterInvocationDefinition.getAttributes(filterInvocation)
+        Collection<ConfigAttribute> results = jaxrsRequestMapFilterInvocationDefinition.getAttributes(filterInvocation)
 
         then:
         if (result == null) {
@@ -49,7 +50,7 @@ class JaxrsAnnotationFilterInvocationDefinitionSpec extends JaxrsFilterInvocatio
         httpServletRequest.getMethod() >> method
 
         when:
-        Collection<ConfigAttribute> results = jaxrsAnnotationFilterInvocationDefinition.getAttributes(filterInvocation)
+        Collection<ConfigAttribute> results = jaxrsRequestMapFilterInvocationDefinition.getAttributes(filterInvocation)
 
         then:
         if (result == null) {
@@ -74,11 +75,11 @@ class JaxrsAnnotationFilterInvocationDefinitionSpec extends JaxrsFilterInvocatio
         httpServletRequest.getContextPath() >> 'https://example.com'
         httpServletRequest.getMethod() >> 'GET'
 
-        jaxrsAnnotationFilterInvocationDefinition.rejectIfNoRule = rejectIfNoRule
-        jaxrsAnnotationFilterInvocationDefinition.allow404 = allow404
+        jaxrsRequestMapFilterInvocationDefinition.rejectIfNoRule = rejectIfNoRule
+        jaxrsRequestMapFilterInvocationDefinition.allow404 = allow404
 
         when:
-        Collection<ConfigAttribute> results = jaxrsAnnotationFilterInvocationDefinition.getAttributes(filterInvocation)
+        Collection<ConfigAttribute> results = jaxrsRequestMapFilterInvocationDefinition.getAttributes(filterInvocation)
 
         then:
         if (rule == null) {
@@ -95,5 +96,18 @@ class JaxrsAnnotationFilterInvocationDefinitionSpec extends JaxrsFilterInvocatio
         true           | false    || '_DENY_'
         false          | true     || null
         true           | true     || 'IS_AUTHENTICATED_ANONYMOUSLY'
+    }
+
+    class TestRequestMapFilterInvocationDefinition extends JaxrsRequestMapFilterInvocationDefinition {
+        protected List<InterceptedUrl> loadRequestMaps() {
+            return [
+                new InterceptedUrl('/api/class_security', ['ROLE_USER'], null),
+                new InterceptedUrl('/api/class_security/anonymous', ['IS_AUTHENTICATED_ANONYMOUSLY'], null),
+                new InterceptedUrl('/api/class_security/**', ['ROLE_READONLY'], null),
+
+                new InterceptedUrl('/api/resource_security', ['ROLE_USER'], null),
+                new InterceptedUrl('/api/resource_security/anonymous', ['IS_AUTHENTICATED_ANONYMOUSLY'], null)
+            ]
+        }
     }
 }

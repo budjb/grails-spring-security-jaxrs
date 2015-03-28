@@ -1,7 +1,10 @@
 package com.budjb.jaxrs.security.test
 
+import com.budjb.jaxrs.test.ClassSecurityResource
+import com.budjb.jaxrs.test.ResourceSecurityResource
 import grails.plugin.springsecurity.ReflectionUtils
 import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.codehaus.groovy.grails.commons.GrailsClass
 import org.springframework.context.ApplicationContext
 import org.springframework.security.access.vote.AuthenticatedVoter
 import org.springframework.security.access.vote.RoleVoter
@@ -16,6 +19,8 @@ class JaxrsFilterInvocationTest extends Specification {
     HttpServletRequest httpServletRequest
     ApplicationContext applicationContext
     GrailsApplication grailsApplication
+    GrailsClass classSecurityResourceGrailsClass
+    GrailsClass resourceSecurityResourceGrailsClass
 
     def setup() {
         applicationContext = Mock(ApplicationContext)
@@ -32,5 +37,11 @@ class JaxrsFilterInvocationTest extends Specification {
 
         filterInvocation = Mock(FilterInvocation)
         filterInvocation.getHttpRequest() >> httpServletRequest
+
+        classSecurityResourceGrailsClass = Mock(GrailsClass)
+        classSecurityResourceGrailsClass.getClazz() >> ClassSecurityResource
+
+        resourceSecurityResourceGrailsClass = Mock(GrailsClass)
+        resourceSecurityResourceGrailsClass.getClazz() >> ResourceSecurityResource
     }
 }
