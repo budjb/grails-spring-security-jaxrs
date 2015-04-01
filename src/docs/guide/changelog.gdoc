@@ -1,3 +1,6 @@
+h3. Version 1.0.1
+* Fix broken SCM, documentation, and issues URLs.
+
 h3. Version 1.0.0
 * Initial public release.
 * Refactor the Jax-RS filter invocation definition classes so they do not extend the base Grails Spring Security\

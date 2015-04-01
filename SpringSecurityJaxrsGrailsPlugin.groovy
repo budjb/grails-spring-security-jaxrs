@@ -28,7 +28,7 @@ class SpringSecurityJaxrsGrailsPlugin {
     /**
      * Project version.
      */
-    def version = '1.0.0'
+    def version = '1.0.1'
 
     /**
      * Required grails version.
@@ -58,7 +58,7 @@ class SpringSecurityJaxrsGrailsPlugin {
     /**
      * Link to documentation.
      */
-    def documentation = 'http://budjb.github.io/grails-jaxrs-security/doc/manual'
+    def documentation = 'http://budjb.github.io/grails-spring-security-jaxrs/doc/manual'
 
     /**
      * Project license.
@@ -68,12 +68,12 @@ class SpringSecurityJaxrsGrailsPlugin {
     /**
      * Issue tracker.
      */
-    def issueManagement = [url: 'https://github.com/budjb/grails-jaxrs-secured/issues']
+    def issueManagement = [url: 'https://github.com/budjb/grails-spring-security-jaxrs/issues']
 
     /**
      * SCM.
      */
-    def scm = [url: 'https://github.com/budjb/grails-jaxrs-secured']
+    def scm = [url: 'https://github.com/budjb/grails-spring-security-jaxrs']
 
     /**
      * Files to watch for reloads.
