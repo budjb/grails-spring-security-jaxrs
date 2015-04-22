@@ -101,7 +101,7 @@ abstract class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationD
         for (InterceptedUrl candidate : compiled) {
             if (candidate.httpMethod && requestMethod && candidate.httpMethod != HttpMethod.valueOf(requestMethod)) {
                 log.trace("Request '${requestMethod} ${url}' doesn't match '${candidate.httpMethod} ${candidate.pattern}'")
-                return null
+                continue
             }
 
             if (urlMatcher.match(candidate.pattern, url)) {

@@ -3,6 +3,7 @@ package com.budjb.jaxrs.test
 import org.springframework.security.access.annotation.Secured
 
 import javax.ws.rs.GET
+import javax.ws.rs.POST
 import javax.ws.rs.Path
 
 @Path('/api/resource_security')
@@ -24,5 +25,12 @@ class ResourceSecurityResource {
     @Path('/norule')
     String norule() {
         return "Welcome to no man's land."
+    }
+
+    @POST
+    @Path('/post')
+    @Secured(['ROLE_USER'])
+    String secured() {
+        return "This is a POST API."
     }
 }

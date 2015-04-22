@@ -1,3 +1,7 @@
+h3. Version 1.0.2
+* Fix bug where Jax-RS security rules would only check the first rules in the list that matched the request HTTP method,\
+  and failed when a different HTTP method was encountered.
+
 h3. Version 1.0.1
 * Fix broken SCM, documentation, and issues URLs.
 
