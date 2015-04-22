@@ -54,6 +54,7 @@ class JaxrsAnnotationFilterInvocationDefinitionSpec extends JaxrsFilterInvocatio
         'https://example.com/api/class_security'           | 'GET'  || 'ROLE_USER'
         'https://example.com/api/class_security/anonymous' | 'GET'  || 'IS_AUTHENTICATED_ANONYMOUSLY'
         'https://example.com/api/class_security/inherit'   | 'GET'  || 'ROLE_READONLY'
+        'https://example.com/api/class_security/post'      | 'POST' || 'ROLE_USER'
     }
 
     @Unroll
@@ -80,6 +81,7 @@ class JaxrsAnnotationFilterInvocationDefinitionSpec extends JaxrsFilterInvocatio
         'https://example.com/api/resource_security'           | 'GET'  || 'ROLE_USER'
         'https://example.com/api/resource_security/anonymous' | 'GET'  || 'IS_AUTHENTICATED_ANONYMOUSLY'
         'https://example.com/api/resource_security/norule'    | 'GET'  || '_DENY_'
+        'https://example.com/api/resource_security/post'      | 'POST' || 'ROLE_USER'
     }
 
     @Unroll
