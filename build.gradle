@@ -73,3 +73,13 @@ dependencies {
 task wrapper(type: Wrapper) {
     gradleVersion = gradleWrapperVersion
 }
+
+grailsPublish {
+    githubSlug = "budjb/grails-spring-security-jaxrs"
+    repo = "grails-plugins"
+    license {
+        name = "Apache-2.0"
+    }
+    title = "spring-security-jaxrs"
+    developers = [budjb: "Bud Byrd"]
+}
