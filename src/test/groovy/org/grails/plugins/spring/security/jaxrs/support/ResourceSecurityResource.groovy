@@ -1,4 +1,4 @@
-package org.grails.plugins.jaxrs.spring.security
+package org.grails.plugins.spring.security.jaxrs.support
 
 import org.springframework.security.access.annotation.Secured
 
@@ -6,9 +6,8 @@ import javax.ws.rs.GET
 import javax.ws.rs.POST
 import javax.ws.rs.Path
 
-@Path('/api/class_security')
-@Secured(['ROLE_READONLY'])
-class ClassSecurityResource {
+@Path('/api/resource_security')
+class ResourceSecurityResource {
     @GET
     @Secured(['ROLE_USER'])
     String index() {
@@ -23,8 +22,8 @@ class ClassSecurityResource {
     }
 
     @GET
-    @Path('/inherit')
-    String inherit() {
+    @Path('/norule')
+    String norule() {
         return "Welcome to no man's land."
     }
 

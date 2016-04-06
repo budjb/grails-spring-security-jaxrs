@@ -1,7 +1,7 @@
-package org.grails.plugins.jaxrs.spring.security
+package org.grails.plugins.spring.security.jaxrs
 
 import grails.plugin.springsecurity.web.access.intercept.AbstractFilterInvocationDefinition
-import org.grails.plugins.jaxrs.spring.security.support.JaxrsFilterInvocationTest
+import org.grails.plugins.spring.security.jaxrs.support.JaxrsFilterInvocationTest
 import org.springframework.security.access.ConfigAttribute
 
 class ObjectDefinitionSourceRegistrySpec extends JaxrsFilterInvocationTest {

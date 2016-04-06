@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.grails.plugins.jaxrs.spring.security
+package org.grails.plugins.spring.security.jaxrs
 
 import grails.core.GrailsClass
-import org.grails.plugins.jaxrs.spring.security.support.JaxrsFilterInvocationTest
+import org.grails.plugins.spring.security.jaxrs.support.JaxrsFilterInvocationTest
 import org.springframework.security.access.ConfigAttribute
 import spock.lang.Unroll
 

@@ -1,4 +1,4 @@
-package org.grails.plugins.jaxrs.spring.security
+package org.grails.plugins.spring.security.jaxrs
 
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration

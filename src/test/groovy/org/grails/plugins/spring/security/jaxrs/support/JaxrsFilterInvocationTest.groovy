@@ -1,7 +1,5 @@
-package org.grails.plugins.jaxrs.spring.security.support
+package org.grails.plugins.spring.security.jaxrs.support
 
-import org.grails.plugins.jaxrs.spring.security.ClassSecurityResource
-import org.grails.plugins.jaxrs.spring.security.ResourceSecurityResource
 import grails.core.GrailsApplication
 import grails.core.GrailsClass
 import grails.plugin.springsecurity.ReflectionUtils

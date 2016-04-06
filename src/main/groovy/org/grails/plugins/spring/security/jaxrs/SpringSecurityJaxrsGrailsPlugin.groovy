@@ -1,4 +1,4 @@
-package org.grails.plugins.jaxrs.spring.security
+package org.grails.plugins.spring.security.jaxrs
 
 import grails.plugin.springsecurity.SpringSecurityUtils
 
@@ -87,15 +87,10 @@ class SpringSecurityJaxrsGrailsPlugin extends Plugin {
     def loadAfter = ['jaxrs', 'spring-security-core']
 
     /**
-     * Excluded files.
+     * Register Spring beans.
+     *
+     * @return
      */
-    def pluginExcludes = [
-        'grails-app/controllers/**',
-        'grails-app/resources/**',
-        'src/groovy/com/budjb/jaxrs/security/test/**',
-        'src/docs/**'
-    ]
-
     Closure doWithSpring() {
         { ->
             println "Configuring Spring Security JAXRS ";
@@ -185,7 +180,7 @@ class SpringSecurityJaxrsGrailsPlugin extends Plugin {
         }
 
         if (event.source && grailsApplication.isResourceClass(event.source)) {
-            event.ctx.jaxrsObjectDefinitionSource.initialize(grailsApplication.resourceClasses)
+            event.ctx.jaxrsObjectDefinitionSource.reset(grailsApplication.resourceClasses)
 
             addResourceMethods grailsApplication.getResourceClass(event.source.name).metaClass, event.ctx
         }
@@ -200,7 +195,7 @@ class SpringSecurityJaxrsGrailsPlugin extends Plugin {
 
             SpringSecurityUtils.loadSecondaryConfig 'DefaultJaxrsSecurityConfig'
 
-            event.ctx.jaxrsObjectDefinitionSource.initialize(grailsApplication.resourceClasses)
+            event.ctx.jaxrsObjectDefinitionSource.reset(grailsApplication.resourceClasses)
         }
     }
 

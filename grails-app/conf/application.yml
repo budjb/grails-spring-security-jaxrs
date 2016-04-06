@@ -2,7 +2,7 @@
 grails:
     profile: web-plugin
     codegen:
-        defaultPackage: org.grails.plugins.jaxrs.spring.security
+        defaultPackage: org.grails.plugins.spring.security.jaxrs
 info:
     app:
         name: '@info.app.name@'

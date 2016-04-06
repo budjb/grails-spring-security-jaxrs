@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.grails.plugins.jaxrs.spring.security
+package org.grails.plugins.spring.security.jaxrs
 
-import groovy.util.logging.Slf4j
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.security.access.ConfigAttribute
 import org.springframework.security.access.SecurityConfig
 import org.springframework.security.web.FilterInvocation
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource
 
-@Slf4j
 class ObjectDefinitionSourceRegistry implements FilterInvocationSecurityMetadataSource {
+    /**
+     * Logger.
+     */
+    Logger log = LoggerFactory.getLogger(ObjectDefinitionSourceRegistry)
+
     /**
      * DENY config rule.
      *
      * This is brought over from {@see AbstractFilterInvocationDefintion}.
      */
-    protected static
-    final Collection<ConfigAttribute> DENY = Collections.singletonList((ConfigAttribute) new SecurityConfig("_DENY_"))
+    protected static final Collection<ConfigAttribute> DENY = Collections.singletonList((ConfigAttribute) new SecurityConfig("_DENY_"))
 
     /**
      * Whether to reject the request if no rule is found.
