@@ -1,0 +1,7 @@
+introduction: Introduction
+configuration: Configuration
+usage: Usage
+changelog:
+    title: Changelog
+    v3Changelog: Grails 3.x
+    v2Changelog: Grails 2.x

@@ -1,0 +1,5 @@
+h3. Version 3.0.0
+* Update plugin for Grails 3.x. (thanks to [Donald Jackson|https://github.com/donald-jackson]!)
+* Update definition classes to match new Spring Security Core counterparts.
+* Renamed project packages to @org.grails.plugins.spring.security.jaxrs@. This should not impact anyone unless\
+  the classes contained in this package have been extended.
