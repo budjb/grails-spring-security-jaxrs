@@ -56,7 +56,7 @@ class ObjectDefinitionSourceRegistrySpec extends JaxrsFilterInvocationTest {
         1 * grailsFilterInvocationDefinition.getAttributes(filterInvocation)
     }
 
-    def 'When no object definition sources matche a request, null is returned'() {
+    def 'When no object definition sources matche a request, an empty list is returned'() {
         setup:
         httpServletRequest.getRequestURI() >> 'https://example.com/api/index'
         httpServletRequest.getContextPath() >> 'https://example.com'
@@ -66,7 +66,7 @@ class ObjectDefinitionSourceRegistrySpec extends JaxrsFilterInvocationTest {
         def result = objectDefinitionSourceRegistry.getAttributes(filterInvocation)
 
         then:
-        result == null
+        result == []
         1 * jaxrsFilterInvocationDefinition.getAttributes(filterInvocation)
         1 * grailsFilterInvocationDefinition.getAttributes(filterInvocation)
     }
