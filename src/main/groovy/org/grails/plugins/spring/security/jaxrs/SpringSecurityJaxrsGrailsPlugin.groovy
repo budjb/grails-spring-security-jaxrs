@@ -1,9 +1,5 @@
-package org.grails.plugins.spring.security.jaxrs
-
-import grails.plugin.springsecurity.SpringSecurityUtils
-
 /*
- * Copyright 2014-2015 Bud Byrd
+ * Copyright 2014-2016 Bud Byrd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +13,21 @@ import grails.plugin.springsecurity.SpringSecurityUtils
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.grails.plugins.spring.security.jaxrs
+
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugins.Plugin
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor
 import org.springframework.security.web.context.NullSecurityContextRepository
 
 class SpringSecurityJaxrsGrailsPlugin extends Plugin {
     /**
-     * Project version.
+     * Logger.
      */
-    def version = '3.0.0'
+    Logger log = LoggerFactory.getLogger(SpringSecurityJaxrsGrailsPlugin)
 
     /**
      * Required grails version.
@@ -36,7 +37,7 @@ class SpringSecurityJaxrsGrailsPlugin extends Plugin {
     /**
      * Plugin title.
      */
-    def title = 'Jaxrs Support for Security Security'
+    def title = 'JAX-RS Support for Security Security'
 
     /**
      * Author name.
@@ -54,14 +55,14 @@ class SpringSecurityJaxrsGrailsPlugin extends Plugin {
     def description = 'Enables Spring Security support for the JAX-RS plugin.'
 
     /**
-     * Link to documentation.
-     */
-    def documentation = 'http://budjb.github.io/grails-spring-security-jaxrs/doc/manual'
-
-    /**
      * Project license.
      */
     def license = 'APACHE'
+
+    /**
+     * Link to documentation.
+     */
+    def documentation = 'http://budjb.github.io/grails-spring-security-jaxrs/doc/manual'
 
     /**
      * Issue tracker.
@@ -77,8 +78,8 @@ class SpringSecurityJaxrsGrailsPlugin extends Plugin {
      * Files to watch for reloads.
      */
     def watchedResources = [
-        "file:./grails-app/resources/**Resource.groovy",
-        "file:./plugins/*/grails-app/resources/**Resource.groovy",
+        "file:./grails-app/resources/**/*Resource.groovy",
+        "file:./plugins/*/grails-app/resources/**/*Resource.groovy"
     ]
 
     /**
@@ -91,65 +92,66 @@ class SpringSecurityJaxrsGrailsPlugin extends Plugin {
      *
      * @return
      */
-    Closure doWithSpring() {
-        { ->
-            println "Configuring Spring Security JAXRS ";
-            def conf = SpringSecurityUtils.securityConfig
-            if (!conf || !conf.active) {
-                return
-            }
+    @Override
+    Closure doWithSpring() {{ ->
+        def conf = SpringSecurityUtils.securityConfig
+        if (!conf || !conf.active) {
+            return
+        }
 
-            SpringSecurityUtils.loadSecondaryConfig 'DefaultJaxrsSecurityConfig'
-            conf = SpringSecurityUtils.securityConfig
+        log.info "Configuring Spring Security for JAX-RS "
 
-            objectDefinitionRegistry(ObjectDefinitionSourceRegistry) {
-                if (conf.rejectIfNoRule instanceof Boolean) {
-                    rejectIfNoRule = conf.rejectIfNoRule
-                }
-            }
+        SpringSecurityUtils.loadSecondaryConfig 'DefaultJaxrsSecurityConfig'
+        conf = SpringSecurityUtils.securityConfig
 
-            filterInvocationInterceptor(FilterSecurityInterceptor) {
-                authenticationManager = ref('authenticationManager')
-                accessDecisionManager = ref('accessDecisionManager')
-                securityMetadataSource = ref('objectDefinitionRegistry')
-                runAsManager = ref('runAsManager')
-                afterInvocationManager = ref('afterInvocationManager')
-                alwaysReauthenticate = conf.fii.alwaysReauthenticate // false
-                rejectPublicInvocations = conf.fii.rejectPublicInvocations // true
-                validateConfigAttributes = conf.fii.validateConfigAttributes // true
-                publishAuthorizationSuccess = conf.fii.publishAuthorizationSuccess // false
-                observeOncePerRequest = conf.fii.observeOncePerRequest // true
-            }
-
-            Class filterInvocationDefinitionClass
-            switch (SpringSecurityUtils.securityConfigType) {
-                case 'Requestmap':
-                    filterInvocationDefinitionClass = JaxrsRequestMapFilterInvocationDefinition
-                    break
-
-                case 'InterceptUrlMap':
-                    filterInvocationDefinitionClass = JaxrsInterceptUrlMapFilterInvocationDefinition
-                    break
-
-                default:
-                    filterInvocationDefinitionClass = JaxrsAnnotationFilterInvocationDefinition
-            }
-
-            jaxrsObjectDefinitionSource(filterInvocationDefinitionClass) {
-                if (conf.rejectIfNoRule instanceof Boolean) {
-                    rejectIfNoRule = conf.rejectIfNoRule
-                }
-                if (conf.jaxrs.allow404 instanceof Boolean) {
-                    allow404 = conf.jaxrs.allow404
-                }
-            }
-
-            if (conf.jaxrs.disableSessions instanceof Boolean && conf.jaxrs.disableSessions) {
-                securityContextRepository(NullSecurityContextRepository)
+        objectDefinitionRegistry(ObjectDefinitionSourceRegistry) {
+            if (conf.rejectIfNoRule instanceof Boolean) {
+                rejectIfNoRule = conf.rejectIfNoRule
             }
         }
-    }
 
+        filterInvocationInterceptor(FilterSecurityInterceptor) {
+            authenticationManager = ref('authenticationManager')
+            accessDecisionManager = ref('accessDecisionManager')
+            securityMetadataSource = ref('objectDefinitionRegistry')
+            runAsManager = ref('runAsManager')
+            afterInvocationManager = ref('afterInvocationManager')
+            alwaysReauthenticate = conf.fii.alwaysReauthenticate // false
+            rejectPublicInvocations = conf.fii.rejectPublicInvocations // true
+            validateConfigAttributes = conf.fii.validateConfigAttributes // true
+            publishAuthorizationSuccess = conf.fii.publishAuthorizationSuccess // false
+            observeOncePerRequest = conf.fii.observeOncePerRequest // true
+        }
+
+        Class filterInvocationDefinitionClass
+        switch (SpringSecurityUtils.securityConfigType) {
+            case 'Requestmap':
+                filterInvocationDefinitionClass = JaxrsRequestMapFilterInvocationDefinition
+                break
+
+            case 'InterceptUrlMap':
+                filterInvocationDefinitionClass = JaxrsInterceptUrlMapFilterInvocationDefinition
+                break
+
+            default:
+                filterInvocationDefinitionClass = JaxrsAnnotationFilterInvocationDefinition
+        }
+
+        jaxrsObjectDefinitionSource(filterInvocationDefinitionClass) {
+            if (conf.rejectIfNoRule instanceof Boolean) {
+                rejectIfNoRule = conf.rejectIfNoRule
+            }
+            if (conf.jaxrs.allow404 instanceof Boolean) {
+                allow404 = conf.jaxrs.allow404
+            }
+        }
+
+        if (conf.jaxrs.disableSessions instanceof Boolean && conf.jaxrs.disableSessions) {
+            securityContextRepository(NullSecurityContextRepository)
+        }
+    }}
+
+    @Override
     void doWithApplicationContext() {
         def conf = SpringSecurityUtils.securityConfig
         if (!conf || !conf.active) {
@@ -162,6 +164,7 @@ class SpringSecurityJaxrsGrailsPlugin extends Plugin {
         applicationContext.objectDefinitionRegistry.register(applicationContext.jaxrsObjectDefinitionSource)
     }
 
+    @Override
     void doWithDynamicMethods() {
         def conf = SpringSecurityUtils.securityConfig
         if (!conf || !conf.active) {
@@ -173,7 +176,8 @@ class SpringSecurityJaxrsGrailsPlugin extends Plugin {
         }
     }
 
-    void onChange(event) {
+    @Override
+    void onChange(Map<String, Object> event) {
         def conf = SpringSecurityUtils.securityConfig
         if (!conf || !conf.active) {
             return
@@ -186,17 +190,16 @@ class SpringSecurityJaxrsGrailsPlugin extends Plugin {
         }
     }
 
-    void onConfigChange() {
-        { event ->
-            def conf = SpringSecurityUtils.securityConfig
-            if (!conf || !conf.active) {
-                return
-            }
-
-            SpringSecurityUtils.loadSecondaryConfig 'DefaultJaxrsSecurityConfig'
-
-            event.ctx.jaxrsObjectDefinitionSource.reset(grailsApplication.resourceClasses)
+    @Override
+    void onConfigChange(Map<String, Object> event) {
+        def conf = SpringSecurityUtils.securityConfig
+        if (!conf || !conf.active) {
+            return
         }
+
+        SpringSecurityUtils.loadSecondaryConfig 'DefaultJaxrsSecurityConfig'
+
+        event.ctx.jaxrsObjectDefinitionSource.reset(grailsApplication.resourceClasses)
     }
 
     private void addResourceMethods(MetaClass mc, ctx) {
