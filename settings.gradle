@@ -1,1 +1,2 @@
-rootProject.name = 'spring-security-jaxrs'
+include 'spring-security-jaxrs'
+include 'spring-security-jaxrs-test'
