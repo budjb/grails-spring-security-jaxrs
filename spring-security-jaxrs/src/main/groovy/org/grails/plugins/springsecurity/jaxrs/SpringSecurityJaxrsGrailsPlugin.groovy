@@ -17,18 +17,13 @@ package org.grails.plugins.springsecurity.jaxrs
 
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugins.Plugin
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import groovy.util.logging.Slf4j
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor
 import org.springframework.security.web.context.NullSecurityContextRepository
 
+@Slf4j
 class SpringSecurityJaxrsGrailsPlugin extends Plugin {
-    /**
-     * Logger.
-     */
-    Logger log = LoggerFactory.getLogger(SpringSecurityJaxrsGrailsPlugin)
-
     /**
      * Required grails version.
      */
@@ -93,63 +88,65 @@ class SpringSecurityJaxrsGrailsPlugin extends Plugin {
      * @return
      */
     @Override
-    Closure doWithSpring() {{ ->
-        def conf = SpringSecurityUtils.securityConfig
-        if (!conf || !conf.active) {
-            return
-        }
+    Closure doWithSpring() {
+        { ->
+            def conf = SpringSecurityUtils.securityConfig
+            if (!conf || !conf.active) {
+                return
+            }
 
-        log.info "Configuring Spring Security for JAX-RS "
+            log.info "Configuring Spring Security for JAX-RS "
 
-        SpringSecurityUtils.loadSecondaryConfig 'DefaultJaxrsSecurityConfig'
-        conf = SpringSecurityUtils.securityConfig
+            SpringSecurityUtils.loadSecondaryConfig 'DefaultJaxrsSecurityConfig'
+            conf = SpringSecurityUtils.securityConfig
 
-        objectDefinitionRegistry(ObjectDefinitionSourceRegistry) {
-            if (conf.rejectIfNoRule instanceof Boolean) {
-                rejectIfNoRule = conf.rejectIfNoRule
+            objectDefinitionRegistry(ObjectDefinitionSourceRegistry) {
+                if (conf.rejectIfNoRule instanceof Boolean) {
+                    rejectIfNoRule = conf.rejectIfNoRule
+                }
+            }
+
+            filterInvocationInterceptor(FilterSecurityInterceptor) {
+                authenticationManager = ref('authenticationManager')
+                accessDecisionManager = ref('accessDecisionManager')
+                securityMetadataSource = ref('objectDefinitionRegistry')
+                runAsManager = ref('runAsManager')
+                afterInvocationManager = ref('afterInvocationManager')
+                alwaysReauthenticate = conf.fii.alwaysReauthenticate // false
+                rejectPublicInvocations = conf.fii.rejectPublicInvocations // true
+                validateConfigAttributes = conf.fii.validateConfigAttributes // true
+                publishAuthorizationSuccess = conf.fii.publishAuthorizationSuccess // false
+                observeOncePerRequest = conf.fii.observeOncePerRequest // true
+            }
+
+            Class filterInvocationDefinitionClass
+            switch (SpringSecurityUtils.securityConfigType) {
+                case 'Requestmap':
+                    filterInvocationDefinitionClass = JaxrsRequestMapFilterInvocationDefinition
+                    break
+
+                case 'InterceptUrlMap':
+                    filterInvocationDefinitionClass = JaxrsInterceptUrlMapFilterInvocationDefinition
+                    break
+
+                default:
+                    filterInvocationDefinitionClass = JaxrsAnnotationFilterInvocationDefinition
+            }
+
+            jaxrsObjectDefinitionSource(filterInvocationDefinitionClass) {
+                if (conf.rejectIfNoRule instanceof Boolean) {
+                    rejectIfNoRule = conf.rejectIfNoRule
+                }
+                if (conf.jaxrs.allow404 instanceof Boolean) {
+                    allow404 = conf.jaxrs.allow404
+                }
+            }
+
+            if (conf.jaxrs.disableSessions instanceof Boolean && conf.jaxrs.disableSessions) {
+                securityContextRepository(NullSecurityContextRepository)
             }
         }
-
-        filterInvocationInterceptor(FilterSecurityInterceptor) {
-            authenticationManager = ref('authenticationManager')
-            accessDecisionManager = ref('accessDecisionManager')
-            securityMetadataSource = ref('objectDefinitionRegistry')
-            runAsManager = ref('runAsManager')
-            afterInvocationManager = ref('afterInvocationManager')
-            alwaysReauthenticate = conf.fii.alwaysReauthenticate // false
-            rejectPublicInvocations = conf.fii.rejectPublicInvocations // true
-            validateConfigAttributes = conf.fii.validateConfigAttributes // true
-            publishAuthorizationSuccess = conf.fii.publishAuthorizationSuccess // false
-            observeOncePerRequest = conf.fii.observeOncePerRequest // true
-        }
-
-        Class filterInvocationDefinitionClass
-        switch (SpringSecurityUtils.securityConfigType) {
-            case 'Requestmap':
-                filterInvocationDefinitionClass = JaxrsRequestMapFilterInvocationDefinition
-                break
-
-            case 'InterceptUrlMap':
-                filterInvocationDefinitionClass = JaxrsInterceptUrlMapFilterInvocationDefinition
-                break
-
-            default:
-                filterInvocationDefinitionClass = JaxrsAnnotationFilterInvocationDefinition
-        }
-
-        jaxrsObjectDefinitionSource(filterInvocationDefinitionClass) {
-            if (conf.rejectIfNoRule instanceof Boolean) {
-                rejectIfNoRule = conf.rejectIfNoRule
-            }
-            if (conf.jaxrs.allow404 instanceof Boolean) {
-                allow404 = conf.jaxrs.allow404
-            }
-        }
-
-        if (conf.jaxrs.disableSessions instanceof Boolean && conf.jaxrs.disableSessions) {
-            securityContextRepository(NullSecurityContextRepository)
-        }
-    }}
+    }
 
     @Override
     void doWithApplicationContext() {
@@ -202,7 +199,7 @@ class SpringSecurityJaxrsGrailsPlugin extends Plugin {
         event.ctx.jaxrsObjectDefinitionSource.reset(grailsApplication.resourceClasses)
     }
 
-    private void addResourceMethods(MetaClass mc, ctx) {
+    private static void addResourceMethods(MetaClass mc, ctx) {
         if (!mc.respondsTo(null, 'getPrincipal')) {
             mc.getPrincipal = { -> SCH.context?.authentication?.principal }
         }

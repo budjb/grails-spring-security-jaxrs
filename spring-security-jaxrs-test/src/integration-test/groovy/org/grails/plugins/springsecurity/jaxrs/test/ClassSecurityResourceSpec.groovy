@@ -1,24 +1,34 @@
 package org.grails.plugins.springsecurity.jaxrs.test
 
-import com.sun.jersey.api.client.Client
-import com.sun.jersey.api.client.ClientResponse
+import com.budjb.httprequests.HttpClientFactory
+import com.budjb.httprequests.HttpMethod
+import com.budjb.httprequests.HttpRequest
+import com.budjb.httprequests.jersey1.JerseyHttpClientFactory
 import geb.spock.GebSpec
 import grails.test.mixin.integration.Integration
 import spock.lang.Unroll
 
 @Integration
 class ClassSecurityResourceSpec extends GebSpec {
+    HttpClientFactory httpClientFactory
+
+    def setup() {
+        httpClientFactory = new JerseyHttpClientFactory()
+    }
+
     @Unroll
     def 'Validate that a request to #method #endpoint with role #role returns HTTP status #status'() {
         setup:
-        def client = Client.create().resource("${browser.baseUrl}${endpoint}")
+        def request = new HttpRequest()
+            .setUri("${browser.baseUrl}${endpoint}")
+            .setThrowStatusExceptions(false)
 
         if (role) {
-            client = client.header('role', role)
+            request.addHeader('role', role)
         }
 
         when:
-        ClientResponse response = client.method(method.toString(), ClientResponse)
+        def response = httpClientFactory.createHttpClient().execute(HttpMethod.valueOf(method), request)
 
         then:
         response.status == status
@@ -47,14 +57,16 @@ class ClassSecurityResourceSpec extends GebSpec {
     @Unroll
     def 'Validate that a request to #endpoint with role #role returns HTTP status #status'() {
         setup:
-        def client = Client.create().resource("${browser.baseUrl}${endpoint}")
+        def request = new HttpRequest()
+            .setUri("${browser.baseUrl}${endpoint}")
+            .setThrowStatusExceptions(false)
 
         if (role) {
-            client = client.header('role', role)
+            request.addHeader('role', role)
         }
 
         when:
-        ClientResponse response = client.get(ClientResponse)
+        def response = httpClientFactory.createHttpClient().get(request)
 
         then:
         response.status == status

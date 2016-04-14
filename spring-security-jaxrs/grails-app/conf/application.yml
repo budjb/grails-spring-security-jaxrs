@@ -5,3 +5,9 @@ info:
         name: '@info.app.name@'
         version: '@info.app.version@'
         grailsVersion: '@info.app.grailsVersion@'
+
+---
+grails:
+    doc:
+        title: Spring Security for JAX-RS
+        authors: Bud Byrd

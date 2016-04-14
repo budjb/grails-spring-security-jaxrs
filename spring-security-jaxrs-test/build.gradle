@@ -31,6 +31,7 @@ ext {
 repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
+    maven { url  "http://dl.bintray.com/budjb/maven" }
 }
 
 dependencyManagement {
@@ -63,7 +64,7 @@ dependencies {
 
     compile project(':spring-security-jaxrs')
     compile 'org.grails.plugins:jaxrs-jersey1:3.0.1'
-    compile 'com.sun.jersey:jersey-client:1.19'
+    compile 'com.budjb:http-requests-jersey1:0.1.1.BETA'
 }
 
 task wrapper(type: Wrapper) {
