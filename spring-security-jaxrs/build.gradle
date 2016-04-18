@@ -16,9 +16,6 @@ plugins {
     id "com.jfrog.bintray" version "1.2"
 }
 
-version "3.0.0"
-group "org.grails.plugins"
-
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
@@ -81,5 +78,6 @@ grailsPublish {
         name = "Apache-2.0"
     }
     title = "spring-security-jaxrs"
+    desc = 'A plugin that allows the use of Spring Security features with JAX-RS resources.'
     developers = [budjb: "Bud Byrd", donaldjackson: 'Donald Jackson']
 }

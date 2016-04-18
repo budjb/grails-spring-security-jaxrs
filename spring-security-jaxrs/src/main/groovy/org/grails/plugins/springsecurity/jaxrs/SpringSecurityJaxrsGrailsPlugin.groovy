@@ -83,6 +83,13 @@ class SpringSecurityJaxrsGrailsPlugin extends Plugin {
     def loadAfter = ['jaxrs', 'spring-security-core']
 
     /**
+     * Developers who have contributed to the development of the plugin.
+     */
+    def developers = [
+        [name: 'Donald Jackson', email: 'donald@ddj.co.za']
+    ]
+
+    /**
      * Register Spring beans.
      *
      * @return

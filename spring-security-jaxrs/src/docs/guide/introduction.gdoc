@@ -1,3 +1,5 @@
-The *spring-security-jaxrs* plugin installs the necessary definition files into the Spring Security system to allow the use of Jax-RS resources.  Annotations, interceptor URL mapping, and database request map modes are all supported.
+The *spring-security-jaxrs* plugin installs the necessary definition files into the Spring Security system to allow the
+use of JAX-RS resources.  Annotations, interceptor URL mapping, and database request map modes are all supported.
 
-The plugin requires no configuration to begin using, and follows the rules of the Grails Spring Security plugin as they are configured in each application.
+The plugin requires no configuration to begin using, and follows the rules of the Grails Spring Security plugin as they
+are configured in each application.

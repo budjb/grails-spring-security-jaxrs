@@ -1,0 +1,7 @@
+version = '3.0.0'
+group = 'org.grails.plugins'
+
+subprojects {
+    project.version = rootProject.version
+    project.group = rootProject.group
+}
