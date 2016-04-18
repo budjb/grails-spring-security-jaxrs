@@ -1,0 +1,4 @@
+DefaultPackage
+com.budjb.jaxrs.security
+com.budjb.jaxrs.security.test
+com.budjb.jaxrs.test
