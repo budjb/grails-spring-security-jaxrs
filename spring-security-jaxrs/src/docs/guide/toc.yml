@@ -3,5 +3,5 @@ configuration: Configuration
 usage: Usage
 changelog:
     title: Changelog
-    v3Changelog: Grails 3.x
-    v2Changelog: Grails 2.x
+    v3changelog: Grails 3.x
+    v2changelog: Grails 2.x
