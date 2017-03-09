@@ -25,4 +25,11 @@ class ResourceSecurityResource {
     String norule() {
         return "ok"
     }
+
+    @GET
+    @Path('/thisIsCamelCase')
+    @Secured(['ROLE_USER'])
+    String camelCase() {
+        return "ok"
+    }
 }

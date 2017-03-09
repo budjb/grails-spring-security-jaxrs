@@ -1,3 +1,8 @@
+h3. Version 3.0.1
+* Fix security issue where resource paths defined with upper case letters do not properly match against\
+  incoming requests. In practice, if Spring Security was configured to allow requests when no security rule\
+  was found, security could be bypassed for paths with upper case letters.
+
 h3. Version 3.0.0
 * Update plugin for Grails 3.x. (thanks to [Donald Jackson|https://github.com/donald-jackson]!)
 * Update definition classes to match new Spring Security Core counterparts.

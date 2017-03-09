@@ -86,7 +86,7 @@ abstract class JaxrsFilterInvocationDefinition extends AbstractFilterInvocationD
      * Replace multiple slashes with one slash, and template path pieces with a .* regex.
      */
     protected String buildPattern(String base, String resource) {
-        return "${base ?: ''}/${resource ?: ''}".replaceAll(/\/+/, '/').replaceAll(/\{[^}]*\}/, '*').replaceAll(/\/$/, '')
+        return "${base?.toLowerCase() ?: ''}/${resource?.toLowerCase() ?: ''}".replaceAll(/\/+/, '/').replaceAll(/\{[^}]*\}/, '*').replaceAll(/\/$/, '')
     }
 
     Collection<ConfigAttribute> getAttributes(object) {

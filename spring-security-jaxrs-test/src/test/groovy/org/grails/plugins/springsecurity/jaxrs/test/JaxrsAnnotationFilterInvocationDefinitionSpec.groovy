@@ -112,4 +112,33 @@ class JaxrsAnnotationFilterInvocationDefinitionSpec extends JaxrsFilterInvocatio
         false          | true     || null
         true           | true     || 'IS_AUTHENTICATED_ANONYMOUSLY'
     }
+
+    @Unroll
+    def 'When a request\'s path\'s case differs from the defined path\'s case, the correct security is required: #path'() {
+        setup:
+        httpServletRequest.getRequestURI() >> path
+        httpServletRequest.getContextPath() >> 'https://example.com'
+        httpServletRequest.getMethod() >> method
+
+        when:
+        Collection<ConfigAttribute> results = jaxrsAnnotationFilterInvocationDefinition.getAttributes(filterInvocation)
+
+        then:
+        if (result == null) {
+            assert results == null
+        }
+        else {
+            assert results.size() == 1
+            assert results[0].attribute == result
+        }
+
+        where:
+        path                                                        | method || result
+        'https://example.com/api/resource_security'                 | 'GET'  || 'ROLE_USER'
+        'https://example.com/api/resourCe_Security'                 | 'GET'  || 'ROLE_USER'
+        'https://example.com/api/resource_security/anonymous'       | 'GET'  || 'IS_AUTHENTICATED_ANONYMOUSLY'
+        'https://example.com/api/resource_security/AnonyMous'       | 'GET'  || 'IS_AUTHENTICATED_ANONYMOUSLY'
+        'https://example.com/api/resource_security/thisIsCamelCase' | 'GET'  || 'ROLE_USER'
+        'https://example.com/api/resource_security/thisiscamelcase' | 'GET'  || 'ROLE_USER'
+    }
 }
